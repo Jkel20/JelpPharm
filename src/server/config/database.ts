@@ -1,28 +1,53 @@
 import mongoose from 'mongoose';
 import { logger } from './logger';
 
-const MONGODB_URI = process.env['MONGODB_URI'] || 'mongodb+srv://Elorm:Kwabena_23@jelppharmarcy.cvb0ysk.mongodb.net/jelp_pharm_pms';
+const MONGODB_URI = process.env['MONGODB_URI'] || 'mongodb+srv://Elorm:Kwabena_23@jelppharmarcy.cvb0ysk.mongodb.net/jelp_pharm_pms?retryWrites=true&w=majority';
 
 // Debug logging
 logger.info(`Environment MONGODB_URI: ${process.env['MONGODB_URI'] ? 'SET' : 'NOT SET'}`);
 logger.info(`Using MONGODB_URI: ${MONGODB_URI}`);
 
-// Validate MongoDB URI format
-const validateMongoURI = (uri: string): boolean => {
+// Additional debugging for Render
+logger.info(`Process env keys: ${Object.keys(process.env).filter(key => key.includes('MONGODB')).join(', ')}`);
+logger.info(`Full MONGODB_URI length: ${MONGODB_URI.length}`);
+logger.info(`MONGODB_URI contains '/': ${MONGODB_URI.includes('/')}`);
+logger.info(`MONGODB_URI contains '\\': ${MONGODB_URI.includes('\\')}`);
+
+// Validate MongoDB URI format and extract database name
+const validateMongoURI = (uri: string): { isValid: boolean; databaseName?: string; error?: string } => {
   try {
     const url = new URL(uri);
-    return url.protocol === 'mongodb:' || url.protocol === 'mongodb+srv:';
-  } catch {
-    return false;
+    
+    if (url.protocol !== 'mongodb:' && url.protocol !== 'mongodb+srv:') {
+      return { isValid: false, error: 'Invalid protocol' };
+    }
+    
+    // Extract database name from pathname
+    const databaseName = url.pathname.substring(1); // Remove leading '/'
+    
+    // Check if database name contains invalid characters
+    if (databaseName.includes('/') || databaseName.includes('\\') || databaseName.includes(' ')) {
+      return { 
+        isValid: false, 
+        error: `Database name contains invalid characters: ${databaseName}` 
+      };
+    }
+    
+    return { isValid: true, databaseName };
+  } catch (error) {
+    return { isValid: false, error: 'Invalid URL format' };
   }
 };
 
 export const connectDB = async (): Promise<void> => {
   try {
     // Validate MongoDB URI
-    if (!validateMongoURI(MONGODB_URI)) {
-      throw new Error(`Invalid MongoDB URI format: ${MONGODB_URI}`);
+    const validation = validateMongoURI(MONGODB_URI);
+    if (!validation.isValid) {
+      throw new Error(`Invalid MongoDB URI: ${validation.error}`);
     }
+    
+    logger.info(`Database name: ${validation.databaseName}`);
 
     // Check if MONGODB_URI is set (not using fallback)
     if (!process.env['MONGODB_URI']) {
