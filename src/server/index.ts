@@ -25,7 +25,7 @@ import path from 'path';
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 const app = express();
-const PORT = process.env['PORT'] || 5000;
+const PORT = process.env['PORT'] || 10000;
 
 // Security middleware
 app.use(helmet());
