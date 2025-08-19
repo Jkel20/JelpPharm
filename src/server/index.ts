@@ -77,6 +77,14 @@ app.use('/api/reports', reportRoutes);
 app.use('/api/stores', storeRoutes);
 app.use('/api/tally', tallyRoutes);
 
+// Serve static files from React build
+app.use(express.static(path.join(__dirname, '../../client/build')));
+
+// Catch-all handler: send back React's index.html file for any non-API routes
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../../client/build/index.html'));
+});
+
 // Error handling middleware
 app.use(notFound);
 app.use(errorHandler);

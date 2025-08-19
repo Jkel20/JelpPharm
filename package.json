@@ -14,7 +14,8 @@
     "test": "jest",
     "lint": "eslint src/**/*.ts client/src/**/*.tsx",
     "lint:fix": "eslint src/**/*.ts client/src/**/*.tsx --fix",
-    "setup-atlas": "node scripts/setup-atlas.js"
+    "setup-atlas": "node scripts/setup-atlas.js",
+    "postinstall": "npm run build"
   },
   "keywords": [
     "pharmacy",
