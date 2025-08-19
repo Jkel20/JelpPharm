@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { Eye, EyeOff, Lock, Mail, User, Building2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import Button from '../../components/ui/Button';
-import { Card, CardHeader, CardContent, CardFooter } from '../../components/ui/Card';
+import { Card } from '../../components/ui/Card';
 
 interface LoginFormData {
   identifier: string;
@@ -14,8 +14,15 @@ interface LoginFormData {
 export const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+
+  // Redirect to dashboard when authenticated
+  React.useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, navigate]);
 
   const {
     register,
@@ -29,12 +36,17 @@ export const Login: React.FC = () => {
       setIsLoading(true);
       console.log('Attempting login with:', data.identifier);
       await login(data.identifier, data.password);
-      console.log('Login successful, redirecting to dashboard...');
-      // Redirect to dashboard after successful login
-      navigate('/dashboard');
+      console.log('Login successful, authentication state updated...');
+      // Navigation will be handled by useEffect when isAuthenticated becomes true
     } catch (error: any) {
       console.error('Login error:', error);
-      if (error.response?.status === 423) {
+      // Handle different types of errors
+      if (error.message) {
+        setError('root', {
+          type: 'manual',
+          message: error.message,
+        });
+      } else if (error.response?.status === 423) {
         setError('root', {
           type: 'manual',
           message: 'Account is locked due to multiple failed login attempts. Please try again later or contact support.',

@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { Eye, EyeOff, Lock, Mail, User, Building2, Phone, MapPin } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import Button from '../../components/ui/Button';
-import Input from '../../components/ui/Input';
-import { Card, CardHeader, CardContent, CardFooter } from '../../components/ui/Card';
+
+import { Card } from '../../components/ui/Card';
 
 interface SignupFormData {
   fullName: string;
@@ -22,8 +22,8 @@ export const Signup: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const { register: authRegister } = useAuth();
-  const navigate = useNavigate();
 
   const {
     register,
@@ -32,7 +32,17 @@ export const Signup: React.FC = () => {
     formState: { errors, isValid, isDirty },
     setError,
   } = useForm<SignupFormData>({
-    mode: 'onChange'
+    mode: 'onChange',
+    defaultValues: {
+      fullName: '',
+      email: '',
+      phone: '',
+      password: '',
+      confirmPassword: '',
+      role: '',
+      storeName: '',
+      storeAddress: ''
+    }
   });
 
   const password = watch('password');
@@ -42,8 +52,8 @@ export const Signup: React.FC = () => {
     try {
       setIsLoading(true);
       await authRegister(data);
-      // Redirect to login after successful registration
-      navigate('/login');
+      // Show success message instead of redirecting
+      setIsSubmitted(true);
     } catch (error: any) {
       console.error('Registration error:', error);
       setError('root', {
@@ -192,11 +202,11 @@ export const Signup: React.FC = () => {
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Building2 className="h-5 w-5 text-gray-400" />
                 </div>
-                <Input
+                <input
                   id="storeName"
                   type="text"
                   placeholder="Enter store name if applicable"
-                  className="pl-10"
+                  className="pl-10 flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                   {...register('storeName')}
                 />
               </div>
@@ -211,11 +221,11 @@ export const Signup: React.FC = () => {
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <MapPin className="h-5 w-5 text-gray-400" />
                 </div>
-                <Input
+                <input
                   id="storeAddress"
                   type="text"
                   placeholder="Enter store address if applicable"
-                  className="pl-10"
+                  className="pl-10 flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                   {...register('storeAddress')}
                 />
               </div>
@@ -324,24 +334,62 @@ export const Signup: React.FC = () => {
             </Button>
           </form>
 
+          {/* Success Message */}
+          {isSubmitted && (
+            <div className="mt-6 rounded-md bg-green-50 p-4">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-green-800">Account Created Successfully!</h3>
+                  <div className="mt-2 text-sm text-green-700">
+                    <p>We've sent a verification email to <strong>{watch('email')}</strong>.</p>
+                    <p className="mt-1">Please check your email and click the verification link to activate your account.</p>
+                  </div>
+                  <div className="mt-4">
+                    <div className="-mx-2 -my-1.5 flex">
+                      <Link
+                        to="/login"
+                        className="bg-green-50 px-2 py-1.5 rounded-md text-sm font-medium text-green-800 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-green-50 focus:ring-green-600"
+                      >
+                        Go to Login
+                      </Link>
+                      <button
+                        onClick={() => setIsSubmitted(false)}
+                        className="ml-3 bg-green-50 px-2 py-1.5 rounded-md text-sm font-medium text-green-800 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-green-50 focus:ring-green-600"
+                      >
+                        Create Another Account
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Login Link */}
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              Already have an account?{' '}
-              <Link
-                to="/login"
-                className="text-pharmacy-600 hover:text-pharmacy-500 font-medium"
-              >
-                Sign in here
-              </Link>
-            </p>
-          </div>
+          {!isSubmitted && (
+            <div className="mt-6 text-center">
+              <p className="text-sm text-gray-600">
+                Already have an account?{' '}
+                <Link
+                  to="/login"
+                  className="text-pharmacy-600 hover:text-pharmacy-500 font-medium"
+                >
+                  Sign in here
+                </Link>
+              </p>
+            </div>
+          )}
         </Card>
 
         {/* Footer */}
         <div className="mt-8 text-center text-sm text-gray-500">
           <p>&copy; {new Date().getFullYear()} JelpPharm. All rights reserved.</p>
-          <p className="mt-1">Pharmacy Management System for Ghana</p>
+          <p className="mt-1">Pharmacy Management System for Ghana - Powered by Addo Pharmacy</p>
         </div>
       </div>
     </div>

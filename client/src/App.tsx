@@ -4,11 +4,13 @@ import { useAuth } from './contexts/AuthContext';
 import { Login } from './pages/auth/Login';
 import { Signup } from './pages/auth/Signup';
 import { ForgotPassword } from './pages/auth/ForgotPassword';
+import { ResetPassword } from './pages/auth/ResetPassword';
 import { Dashboard } from './pages/Dashboard';
 import { Inventory } from './pages/Inventory';
 import { Sales } from './pages/Sales';
 import { Prescriptions } from './pages/Prescriptions';
 import { Reports } from './pages/Reports';
+import { Settings } from './pages/Settings';
 import MainLayout from './components/layout/MainLayout';
 
 // Protected Route component
@@ -37,6 +39,7 @@ const App: React.FC = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route 
           path="/dashboard" 
           element={
@@ -83,6 +86,16 @@ const App: React.FC = () => {
             <ProtectedRoute>
               <MainLayout>
                 <Reports />
+              </MainLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/settings" 
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <Settings />
               </MainLayout>
             </ProtectedRoute>
           } 

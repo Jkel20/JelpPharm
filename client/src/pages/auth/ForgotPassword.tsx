@@ -4,8 +4,8 @@ import { useForm } from 'react-hook-form';
 import { Mail, ArrowLeft, CheckCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import Button from '../../components/ui/Button';
-import Input from '../../components/ui/Input';
-import { Card, CardHeader, CardContent, CardFooter } from '../../components/ui/Card';
+
+import { Card } from '../../components/ui/Card';
 
 interface ForgotPasswordFormData {
   email: string;
@@ -14,14 +14,18 @@ interface ForgotPasswordFormData {
 export const ForgotPassword: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const { user } = useAuth(); // We'll add forgotPassword method to AuthContext later
+  // We'll add forgotPassword method to AuthContext later
 
   const {
     register,
     handleSubmit,
     formState: { errors },
     setError,
-  } = useForm<ForgotPasswordFormData>();
+  } = useForm<ForgotPasswordFormData>({
+    defaultValues: {
+      email: ''
+    }
+  });
 
   const onSubmit = async (data: ForgotPasswordFormData) => {
     try {
@@ -94,7 +98,7 @@ export const ForgotPassword: React.FC = () => {
           {/* Footer */}
           <div className="mt-8 text-center text-sm text-gray-500">
             <p>&copy; {new Date().getFullYear()} JelpPharm. All rights reserved.</p>
-            <p className="mt-1">Pharmacy Management System for Ghana</p>
+            <p className="mt-1">Pharmacy Management System for Ghana - Powered by Addo Pharmacy</p>
           </div>
         </div>
       </div>
@@ -116,8 +120,8 @@ export const ForgotPassword: React.FC = () => {
         {/* Forgot Password Form */}
         <Card className="p-8">
           <div className="text-center mb-6">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-2">Reset Password</h2>
-            <p className="text-gray-600">Enter your email address and we'll send you a link to reset your password</p>
+            <h2 className="text-2xl font-semibold text-gray-900 mb-2">Request Password Reset</h2>
+            <p className="text-gray-600">Enter your email address and we'll send you a secure link to reset your password</p>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -130,11 +134,11 @@ export const ForgotPassword: React.FC = () => {
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Mail className="h-5 w-5 text-gray-400" />
                 </div>
-                <Input
+                <input
                   id="email"
                   type="email"
                   placeholder="Enter your email address"
-                  className={`pl-10 ${errors.email ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''}`}
+                  className={`pl-10 flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 ${errors.email ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''}`}
                   {...register('email', {
                     required: 'Email is required',
                     pattern: {
@@ -191,7 +195,7 @@ export const ForgotPassword: React.FC = () => {
         {/* Footer */}
         <div className="mt-8 text-center text-sm text-gray-500">
           <p>&copy; {new Date().getFullYear()} JelpPharm. All rights reserved.</p>
-          <p className="mt-1">Pharmacy Management System for Ghana</p>
+          <p className="mt-1">Pharmacy Management System for Ghana - Powered by Addo Pharmacy</p>
         </div>
       </div>
     </div>

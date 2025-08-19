@@ -12,6 +12,7 @@ import {
   Activity
 } from 'lucide-react';
 import { dashboardAPI } from '../services/api';
+import { mockDashboardData } from '../services/mockData';
 
 // TypeScript interfaces for dashboard data
 interface Alert {
@@ -213,7 +214,40 @@ export const Dashboard: React.FC = () => {
         setRecentActivities(activitiesData.activities);
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
-        // Keep default values on error
+        // Use mock data when API fails
+        setStats([
+          {
+            title: 'Total Drugs',
+            value: mockDashboardData.stats.totalDrugs.value.toString(),
+            change: mockDashboardData.stats.totalDrugs.change,
+            icon: <Package className="w-6 h-6 text-white" />,
+            color: 'bg-blue-500'
+          },
+          {
+            title: 'Today\'s Sales',
+            value: mockDashboardData.stats.todaySales.value,
+            change: mockDashboardData.stats.todaySales.change,
+            icon: <ShoppingCart className="w-6 h-6 text-white" />,
+            color: 'bg-green-500'
+          },
+          {
+            title: 'Active Prescriptions',
+            value: mockDashboardData.stats.activePrescriptions.value.toString(),
+            change: mockDashboardData.stats.activePrescriptions.change,
+            icon: <FileText className="w-6 h-6 text-white" />,
+            color: 'bg-purple-500'
+          },
+          {
+            title: 'Registered Users',
+            value: mockDashboardData.stats.registeredUsers.value.toString(),
+            change: mockDashboardData.stats.registeredUsers.change,
+            icon: <Users className="w-6 h-6 text-white" />,
+            color: 'bg-orange-500'
+          }
+        ]);
+        
+        setAlerts(mockDashboardData.alerts);
+        setRecentActivities(mockDashboardData.activities);
       } finally {
         setLoading(false);
       }
