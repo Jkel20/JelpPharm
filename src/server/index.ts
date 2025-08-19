@@ -17,6 +17,7 @@ import prescriptionRoutes from './routes/prescriptions';
 import reportRoutes from './routes/reports';
 import storeRoutes from './routes/stores';
 import tallyRoutes from './routes/tally';
+import dashboardRoutes from './routes/dashboard';
 import { errorHandler } from './middleware/errorHandler';
 import { notFound } from './middleware/notFound';
 
@@ -76,6 +77,7 @@ app.use('/api/prescriptions', prescriptionRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/stores', storeRoutes);
 app.use('/api/tally', tallyRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 // Serve static files from React build
 app.use(express.static(path.join(__dirname, '../../client/build')));

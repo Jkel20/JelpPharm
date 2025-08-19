@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -11,6 +11,29 @@ import {
   DollarSign,
   Activity
 } from 'lucide-react';
+import { dashboardAPI } from '../services/api';
+
+// TypeScript interfaces for dashboard data
+interface Alert {
+  type: string;
+  title: string;
+  message: string;
+  severity: 'danger' | 'warning' | 'info';
+  drugs?: Array<{
+    name: string;
+    quantity: number;
+    reorderLevel?: number;
+    expiryDate?: Date;
+  }>;
+}
+
+interface Activity {
+  id: string;
+  action: string;
+  item: string;
+  time: string;
+  type: 'success' | 'warning' | 'info';
+}
 
 interface StatCardProps {
   title: string;
@@ -77,37 +100,42 @@ const QuickAction: React.FC<QuickActionProps> = ({ title, description, icon, hre
 
 export const Dashboard: React.FC = () => {
   const { user, logout } = useAuth();
-
-  const stats = [
+  const navigate = useNavigate();
+  
+  const [stats, setStats] = useState([
     {
       title: 'Total Drugs',
-      value: '1,247',
-      change: '+12% from last month',
+      value: '0',
+      change: 'Loading...',
       icon: <Package className="w-6 h-6 text-white" />,
       color: 'bg-blue-500'
     },
     {
       title: 'Today\'s Sales',
-      value: '₵2,450',
-      change: '+8% from yesterday',
+      value: '₵0',
+      change: 'Loading...',
       icon: <ShoppingCart className="w-6 h-6 text-white" />,
       color: 'bg-green-500'
     },
     {
       title: 'Active Prescriptions',
-      value: '89',
-      change: '+5% from last week',
+      value: '0',
+      change: 'Loading...',
       icon: <FileText className="w-6 h-6 text-white" />,
       color: 'bg-purple-500'
     },
     {
       title: 'Registered Users',
-      value: '24',
-      change: '+2 this month',
+      value: '0',
+      change: 'Loading...',
       icon: <Users className="w-6 h-6 text-white" />,
       color: 'bg-orange-500'
     }
-  ];
+  ]);
+  
+  const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [recentActivities, setRecentActivities] = useState<Activity[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const quickActions = [
     {
@@ -136,13 +164,63 @@ export const Dashboard: React.FC = () => {
     }
   ];
 
-  const recentActivities = [
-    { id: 1, action: 'New drug added', item: 'Paracetamol 500mg', time: '2 minutes ago', type: 'success' },
-    { id: 2, action: 'Sale completed', item: '₵150.00', time: '15 minutes ago', type: 'success' },
-    { id: 3, action: 'Low stock alert', item: 'Amoxicillin 250mg', time: '1 hour ago', type: 'warning' },
-    { id: 4, action: 'Prescription filled', item: 'Patient: John Doe', time: '2 hours ago', type: 'info' },
-    { id: 5, action: 'User login', item: 'Pharmacist: Sarah', time: '3 hours ago', type: 'info' }
-  ];
+  // Fetch dashboard data on component mount
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch stats, alerts, and activities in parallel
+        const [statsData, alertsData, activitiesData] = await Promise.all([
+          dashboardAPI.getStats(),
+          dashboardAPI.getAlerts(),
+          dashboardAPI.getRecentActivities()
+        ]);
+        
+        // Update stats
+        setStats([
+          {
+            title: 'Total Drugs',
+            value: statsData.totalDrugs.value,
+            change: statsData.totalDrugs.change,
+            icon: <Package className="w-6 h-6 text-white" />,
+            color: 'bg-blue-500'
+          },
+          {
+            title: 'Today\'s Sales',
+            value: statsData.todaySales.value,
+            change: statsData.todaySales.change,
+            icon: <ShoppingCart className="w-6 h-6 text-white" />,
+            color: 'bg-green-500'
+          },
+          {
+            title: 'Active Prescriptions',
+            value: statsData.activePrescriptions.value,
+            change: statsData.activePrescriptions.change,
+            icon: <FileText className="w-6 h-6 text-white" />,
+            color: 'bg-purple-500'
+          },
+          {
+            title: 'Registered Users',
+            value: statsData.registeredUsers.value,
+            change: statsData.registeredUsers.change,
+            icon: <Users className="w-6 h-6 text-white" />,
+            color: 'bg-orange-500'
+          }
+        ]);
+        
+        setAlerts(alertsData.alerts);
+        setRecentActivities(activitiesData.activities);
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+        // Keep default values on error
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchDashboardData();
+  }, []);
 
   return (
     <div className="min-h-screen relative overflow-hidden">
@@ -183,9 +261,25 @@ export const Dashboard: React.FC = () => {
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {stats.map((stat, index) => (
-            <StatCard key={index} {...stat} />
-          ))}
+          {loading ? (
+            // Loading skeleton for stats
+            Array.from({ length: 4 }).map((_, index) => (
+              <div key={index} className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-6 border border-gray-200">
+                <div className="flex items-center">
+                  <div className="w-16 h-16 bg-gray-200 rounded-xl animate-pulse"></div>
+                  <div className="ml-4 flex-1">
+                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2 animate-pulse"></div>
+                    <div className="h-8 bg-gray-200 rounded w-1/2 mb-2 animate-pulse"></div>
+                    <div className="h-3 bg-gray-200 rounded w-2/3 animate-pulse"></div>
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            stats.map((stat, index) => (
+              <StatCard key={index} {...stat} />
+            ))
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -204,25 +298,46 @@ export const Dashboard: React.FC = () => {
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Activity</h2>
             <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200">
               <div className="p-6">
-                <div className="space-y-4">
-                  {recentActivities.map((activity) => (
-                    <div key={activity.id} className="flex items-center space-x-4 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200">
-                      <div className={`w-3 h-3 rounded-full shadow-sm ${
-                        activity.type === 'success' ? 'bg-green-500' :
-                        activity.type === 'warning' ? 'bg-yellow-500' :
-                        'bg-blue-500'
-                      }`} />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-gray-900">
-                          {activity.action}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          {activity.item} • {activity.time}
-                        </p>
+                {loading ? (
+                  <div className="space-y-4">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="flex items-center space-x-4 p-3">
+                        <div className="w-3 h-3 bg-gray-200 rounded-full animate-pulse"></div>
+                        <div className="flex-1">
+                          <div className="h-4 bg-gray-200 rounded w-3/4 mb-2 animate-pulse"></div>
+                          <div className="h-3 bg-gray-200 rounded w-1/2 animate-pulse"></div>
+                        </div>
                       </div>
+                    ))}
+                  </div>
+                ) : recentActivities.length > 0 ? (
+                  <div className="space-y-4">
+                    {recentActivities.map((activity) => (
+                      <div key={activity.id} className="flex items-center space-x-4 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+                        <div className={`w-3 h-3 rounded-full shadow-sm ${
+                          activity.type === 'success' ? 'bg-green-500' :
+                          activity.type === 'warning' ? 'bg-yellow-500' :
+                          'bg-blue-500'
+                        }`} />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-gray-900">
+                            {activity.action}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {activity.item} • {activity.time}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <div className="text-gray-400 mb-2">
+                      <Activity className="w-12 h-12 mx-auto" />
                     </div>
-                  ))}
-                </div>
+                    <p className="text-gray-500 text-sm">No recent activities</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -231,22 +346,108 @@ export const Dashboard: React.FC = () => {
         {/* Alerts Section */}
         <div className="mt-8">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Alerts & Notifications</h2>
-          <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-xl p-6 shadow-lg">
-            <div className="flex items-start">
-              <div className="p-2 bg-yellow-100 rounded-lg mr-4">
-                <AlertTriangle className="w-6 h-6 text-yellow-600" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-yellow-800 mb-2">Low Stock Alert</h3>
-                <p className="text-sm text-yellow-700 leading-relaxed">
-                  Several medications are running low on stock. Please review inventory and place reorders to ensure continuous service.
-                </p>
-                <button className="mt-3 bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200">
-                  View Inventory
-                </button>
+          {loading ? (
+            <div className="bg-gray-50 border border-gray-200 rounded-xl p-6">
+              <div className="animate-pulse">
+                <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
+                <div className="h-3 bg-gray-200 rounded w-3/4"></div>
               </div>
             </div>
-          </div>
+          ) : alerts.length > 0 ? (
+            <div className="space-y-4">
+              {alerts.map((alert, index) => (
+                <div 
+                  key={index}
+                  className={`border rounded-xl p-6 shadow-lg ${
+                    alert.severity === 'danger' 
+                      ? 'bg-gradient-to-r from-red-50 to-pink-50 border-red-200' 
+                      : alert.severity === 'warning'
+                      ? 'bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-200'
+                      : 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200'
+                  }`}
+                >
+                  <div className="flex items-start">
+                    <div className={`p-2 rounded-lg mr-4 ${
+                      alert.severity === 'danger' 
+                        ? 'bg-red-100' 
+                        : alert.severity === 'warning'
+                        ? 'bg-yellow-100'
+                        : 'bg-blue-100'
+                    }`}>
+                      <AlertTriangle className={`w-6 h-6 ${
+                        alert.severity === 'danger' 
+                          ? 'text-red-600' 
+                          : alert.severity === 'warning'
+                          ? 'text-yellow-600'
+                          : 'text-blue-600'
+                      }`} />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className={`text-lg font-semibold mb-2 ${
+                        alert.severity === 'danger' 
+                          ? 'text-red-800' 
+                          : alert.severity === 'warning'
+                          ? 'text-yellow-800'
+                          : 'text-blue-800'
+                      }`}>
+                        {alert.title}
+                      </h3>
+                      <p className={`text-sm leading-relaxed mb-3 ${
+                        alert.severity === 'danger' 
+                          ? 'text-red-700' 
+                          : alert.severity === 'warning'
+                          ? 'text-yellow-700'
+                          : 'text-blue-700'
+                      }`}>
+                        {alert.message}
+                      </p>
+                      {alert.drugs && alert.drugs.length > 0 && (
+                        <div className="mb-3">
+                          <p className="text-xs font-medium text-gray-600 mb-2">Affected Medications:</p>
+                          <div className="flex flex-wrap gap-2">
+                            {alert.drugs.map((drug, drugIndex) => (
+                              <span 
+                                key={drugIndex}
+                                className="px-2 py-1 bg-white/50 rounded text-xs font-medium text-gray-700"
+                              >
+                                {drug.name} (Qty: {drug.quantity})
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      <button 
+                        onClick={() => navigate('/inventory')}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
+                          alert.severity === 'danger' 
+                            ? 'bg-red-600 hover:bg-red-700 text-white' 
+                            : alert.severity === 'warning'
+                            ? 'bg-yellow-600 hover:bg-yellow-700 text-white'
+                            : 'bg-blue-600 hover:bg-blue-700 text-white'
+                        }`}
+                      >
+                        View Inventory
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-green-50 border border-green-200 rounded-xl p-6">
+              <div className="flex items-center">
+                <div className="p-2 bg-green-100 rounded-lg mr-4">
+                  <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-green-800">All Good!</h3>
+                  <p className="text-sm text-green-700">No alerts at the moment. Your inventory is well-managed.</p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
