@@ -12,6 +12,7 @@
     "build:client": "cd client && npm run build",
     "start": "node dist/server/index.js",
     "render-build": "npm ci && cd client && npm ci && cd .. && npm run build:server && npm run build:client",
+    "postinstall": "npm run build:server",
 
     "test": "jest",
     "lint": "eslint src/**/*.ts client/src/**/*.tsx",
