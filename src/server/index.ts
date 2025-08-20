@@ -35,7 +35,8 @@ app.use(helmet());
 app.use(cors({
   origin: process.env['NODE_ENV'] === 'production' 
     ? [
-        process.env['CORS_ORIGIN'] || 'https://yourdomain.com',
+        process.env['CORS_ORIGIN'] || 'https://jelppharm-5vcm.onrender.com',
+        'https://jelppharm-5vcm.onrender.com', // Your specific Render service
         /\.onrender\.com$/, // Allow all Render subdomains
         /\.vercel\.app$/,   // Allow Vercel deployments
         /\.netlify\.app$/   // Allow Netlify deployments
@@ -114,9 +115,19 @@ const startServer = async () => {
 
     // Start server
     app.listen(PORT, () => {
-      logger.info(`Server running on port ${PORT} in ${process.env['NODE_ENV']} mode`);
-      logger.info(`Health check: http://localhost:${PORT}/health`);
-      logger.info(`API base: http://localhost:${PORT}/api`);
+      const isProduction = process.env['NODE_ENV'] === 'production';
+      const serverUrl = isProduction 
+        ? (process.env['RENDER_EXTERNAL_URL'] || `http://localhost:${PORT}`)
+        : `http://localhost:${PORT}`;
+      
+      logger.info(`Server running on port ${PORT} in ${process.env['NODE_ENV'] || 'development'} mode`);
+      logger.info(`Health check: ${serverUrl}/health`);
+      logger.info(`API base: ${serverUrl}/api`);
+      
+      if (isProduction) {
+        logger.info(`Production server accessible at: ${serverUrl}`);
+        logger.info(`CORS configured for: ${process.env['CORS_ORIGIN'] || 'Render domains'}`);
+      }
     });
   } catch (error) {
     logger.error('Failed to start server:', error);
