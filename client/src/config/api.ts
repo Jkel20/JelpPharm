@@ -4,13 +4,13 @@ export const API_CONFIG = {
   BASE_URL: process.env.REACT_APP_API_URL || 
     (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
       ? 'http://localhost:5000/api' 
-      : 'https://YOUR-NEW-SERVER-SERVICE.onrender.com/api'), // Point to your new server service
+      : 'https://jelppharm-server.onrender.com/api'), // Point to your new server service
   
   // Server URL
   SERVER_URL: process.env.REACT_APP_SERVER_URL || 
     (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
       ? 'http://localhost:5000' 
-      : 'https://YOUR-NEW-SERVER-SERVICE.onrender.com'), // Point to your new server service
+      : 'https://jelppharm-server.onrender.com'), // Point to your new server service
   
   // API Endpoints
   ENDPOINTS: {
