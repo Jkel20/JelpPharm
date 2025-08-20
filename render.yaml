@@ -1,0 +1,50 @@
+services:
+  - type: web
+    name: jelppharm-pms
+    env: node
+    plan: free
+    buildCommand: npm ci && npm run build:server && npm run build:client
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: EMAIL_HOST
+        value: smtp.gmail.com
+      - key: EMAIL_PORT
+        value: 587
+      - key: EMAIL_USER
+        sync: false
+      - key: EMAIL_PASS
+        sync: false
+      - key: EMAIL_FROM
+        value: noreply@jelppharm.com
+      - key: BCRYPT_ROUNDS
+        value: 12
+      - key: RATE_LIMIT_WINDOW_MS
+        value: 900000
+      - key: RATE_LIMIT_MAX_REQUESTS
+        value: 100
+      - key: LOGIN_ATTEMPTS_LIMIT
+        value: 5
+      - key: LOGIN_LOCKOUT_DURATION_MS
+        value: 900000
+      - key: MAX_FILE_SIZE
+        value: 5242880
+      - key: UPLOAD_PATH
+        value: ./uploads
+      - key: LOG_LEVEL
+        value: info
+      - key: LOG_FILE_PATH
+        value: ./logs/app.log
+      - key: FDA_COMPLIANCE_ENABLED
+        value: true
+      - key: PRESCRIPTION_RETENTION_YEARS
+        value: 5
+      - key: CORS_ORIGIN
+        value: https://jelppharm-pms.onrender.com
