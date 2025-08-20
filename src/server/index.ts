@@ -34,9 +34,16 @@ const PORT = process.env['PORT'] || 10000;
 app.use(helmet());
 app.use(cors({
   origin: process.env['NODE_ENV'] === 'production' 
-    ? [process.env['CORS_ORIGIN'] || 'https://yourdomain.com'] 
+    ? [
+        process.env['CORS_ORIGIN'] || 'https://yourdomain.com',
+        /\.onrender\.com$/, // Allow all Render subdomains
+        /\.vercel\.app$/,   // Allow Vercel deployments
+        /\.netlify\.app$/   // Allow Netlify deployments
+      ]
     : ['http://localhost:3000', 'http://localhost:5000'],
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
 // Rate limiting

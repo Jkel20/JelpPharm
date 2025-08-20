@@ -1,10 +1,16 @@
 // API Configuration
 export const API_CONFIG = {
   // Base URL for the API
-  BASE_URL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
+  BASE_URL: process.env.REACT_APP_API_URL || 
+    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+      ? 'http://localhost:5000/api' 
+      : `${window.location.protocol}//${window.location.hostname}/api`),
   
   // Server URL
-  SERVER_URL: process.env.REACT_APP_SERVER_URL || 'http://localhost:5000',
+  SERVER_URL: process.env.REACT_APP_SERVER_URL || 
+    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+      ? 'http://localhost:5000' 
+      : `${window.location.protocol}//${window.location.hostname}`),
   
   // API Endpoints
   ENDPOINTS: {
