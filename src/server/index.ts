@@ -7,6 +7,7 @@ import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import { connectDB } from './config/database';
 import { logger } from './config/logger';
+import { seedRolesAndPrivileges } from './data/seedRoles';
 import authRoutes from './routes/auth';
 import userRoutes from './routes/users';
 import drugRoutes from './routes/drugs';
@@ -18,6 +19,7 @@ import reportRoutes from './routes/reports';
 import storeRoutes from './routes/stores';
 import tallyRoutes from './routes/tally';
 import dashboardRoutes from './routes/dashboard';
+import testPrivilegeRoutes from './routes/test-privileges';
 import { errorHandler } from './middleware/errorHandler';
 import { notFound } from './middleware/notFound';
 
@@ -32,8 +34,8 @@ const PORT = process.env['PORT'] || 10000;
 app.use(helmet());
 app.use(cors({
   origin: process.env['NODE_ENV'] === 'production' 
-    ? ['https://yourdomain.com'] 
-    : ['http://localhost:3000'],
+    ? [process.env['CORS_ORIGIN'] || 'https://yourdomain.com'] 
+    : ['http://localhost:3000', 'http://localhost:5000'],
   credentials: true
 }));
 
@@ -78,6 +80,7 @@ app.use('/api/reports', reportRoutes);
 app.use('/api/stores', storeRoutes);
 app.use('/api/tally', tallyRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/test-privileges', testPrivilegeRoutes);
 
 // Serve static files from React build
 app.use(express.static(path.join(__dirname, '../../client/build')));
@@ -97,6 +100,10 @@ const startServer = async () => {
     // Connect to database
     await connectDB();
     logger.info('Connected to MongoDB');
+
+    // Seed roles and privileges
+    await seedRolesAndPrivileges();
+    logger.info('Roles and privileges seeded successfully');
 
     // Start server
     app.listen(PORT, () => {

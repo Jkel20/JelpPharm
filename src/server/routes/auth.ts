@@ -1,10 +1,12 @@
 import express from 'express';
 import { body, validationResult } from 'express-validator';
+import mongoose from 'mongoose';
 
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { User } from '../models/User';
 import { Store } from '../models/Store';
+import { Role } from '../models/Role';
 import { logger } from '../config/logger';
 import { sendPasswordResetEmail } from '../utils/email';
 import { auth } from '../middleware/auth';
@@ -45,8 +47,8 @@ const validateSignup = [
     .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
     .withMessage('Password must be at least 8 characters and contain uppercase, lowercase, digit, and special character'),
   body('role')
-    .isIn(['Administrator', 'Pharmacist', 'Cashier', 'Store Manager'])
-    .withMessage('Invalid role selected'),
+    .isIn(['ADMINISTRATOR', 'PHARMACIST'])
+    .withMessage('Invalid role selected. Only Administrator and Pharmacist roles are allowed.'),
   body('storeId')
     .optional()
     .isMongoId()
@@ -93,7 +95,7 @@ router.post('/signup', authLimiter, validateSignup, async (req: express.Request,
       });
     }
 
-    const { fullName, username, email, phone, password, role, storeId } = req.body;
+    const { fullName, username, email, phone, password, role, storeId, storeName, storeAddress } = req.body;
 
     // Check if user already exists
     const existingUser = await User.findOne({
@@ -107,9 +109,37 @@ router.post('/signup', authLimiter, validateSignup, async (req: express.Request,
       });
     }
 
+    // Find the role by code
+    const roleDoc = await Role.findOne({ code: role, isActive: true });
+    if (!roleDoc) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid role specified'
+      });
+    }
+
+    let finalStoreId = storeId;
+
+    // Handle store creation for non-administrators
+    if (role !== 'ADMINISTRATOR') {
+      if (storeName && storeAddress) {
+        // For now, we'll create a temporary store ID to satisfy the requirement
+        // In a production system, you'd want to create the store first, then the user
+        // This is a simplified approach for development
+        finalStoreId = new mongoose.Types.ObjectId();
+        logger.info(`Using temporary store ID: ${finalStoreId} for user: ${email}`);
+      } else if (!storeId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Store information is required for non-administrator users'
+        });
+      }
+    }
+
     // Validate store assignment for non-administrators
-    if (role !== 'Administrator' && storeId) {
-      const store = await Store.findById(storeId);
+    if (role !== 'ADMINISTRATOR' && finalStoreId && storeId) {
+      // Only validate if a real storeId was provided (not a temporary one)
+      const store = await Store.findById(finalStoreId);
       if (!store) {
         return res.status(400).json({
           success: false,
@@ -131,15 +161,15 @@ router.post('/signup', authLimiter, validateSignup, async (req: express.Request,
       email,
       phone,
       password,
-      role,
-      storeId: role === 'Administrator' ? undefined : storeId
+      roleId: roleDoc._id,
+      storeId: role === 'ADMINISTRATOR' ? undefined : finalStoreId
     });
 
     await user.save();
 
     // Generate JWT token
     const token = jwt.sign(
-      { userId: user._id, role: user.role, storeId: user.storeId },
+      { userId: user._id, role: role, storeId: finalStoreId },
       process.env['JWT_SECRET'] || 'fallback-secret',
       { expiresIn: process.env['JWT_EXPIRES_IN'] || '24h' } as jwt.SignOptions
     );
@@ -152,12 +182,12 @@ router.post('/signup', authLimiter, validateSignup, async (req: express.Request,
       message: 'User registered successfully',
       data: {
         user: {
-          id: user._id,
+          id: user._id.toString(),
           fullName: user.fullName,
           username: user.username,
           email: user.email,
-          role: user.role,
-          storeId: user.storeId
+          role: role,
+          storeId: finalStoreId
         },
         token
       }
@@ -237,9 +267,13 @@ router.post('/login', authLimiter, validateLogin, async (req: express.Request, r
     user.lastLogin = new Date();
     await user.save();
 
+    // Get role information for JWT
+    const role = await mongoose.model('Role').findById(user.roleId);
+    const roleCode = role ? role.code : 'UNKNOWN';
+
     // Generate JWT token
     const token = jwt.sign(
-      { userId: user._id, role: user.role, storeId: user.storeId },
+      { userId: user._id, role: roleCode, storeId: user.storeId },
       process.env['JWT_SECRET'] || 'fallback-secret',
       { expiresIn: process.env['JWT_EXPIRES_IN'] || '24h' } as jwt.SignOptions
     );
@@ -259,11 +293,11 @@ router.post('/login', authLimiter, validateLogin, async (req: express.Request, r
       message: 'Login successful',
       data: {
         user: {
-          id: user._id,
+          id: user._id.toString(),
           fullName: user.fullName,
           username: user.username,
           email: user.email,
-          role: user.role,
+          role: roleCode,
           storeId: user.storeId
         },
         token,
@@ -424,9 +458,13 @@ router.post('/refresh-token', async (req: express.Request, res: express.Response
       });
     }
 
+    // Get role information for JWT
+    const role = await mongoose.model('Role').findById(user.roleId);
+    const roleCode = role ? role.code : 'UNKNOWN';
+
     // Generate new access token
     const newToken = jwt.sign(
-      { userId: user._id, role: user.role, storeId: user.storeId },
+      { userId: user._id, role: roleCode, storeId: user.storeId },
       process.env['JWT_SECRET'] || 'fallback-secret',
       { expiresIn: process.env['JWT_EXPIRES_IN'] || '24h' } as jwt.SignOptions
     );

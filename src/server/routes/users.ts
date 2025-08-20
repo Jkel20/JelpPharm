@@ -2,7 +2,16 @@ import express from 'express';
 import { body, validationResult } from 'express-validator';
 import { User } from '../models/User';
 import { logger } from '../config/logger';
-import { auth, requireAdmin } from '../middleware/auth';
+import { 
+  auth, 
+  requireAdmin, 
+  requirePrivilege, 
+  requireAllPrivileges,
+  requireUserManagement,
+  requireCreateUsers,
+  requireEditUsers,
+  requireDeleteUsers
+} from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
 
 const router = express.Router();
@@ -56,9 +65,9 @@ const validateUserUpdate = [
 ];
 
 // @route   GET /api/users
-// @desc    Get all users (Admin only)
-// @access  Private/Admin
-router.get('/', auth, requireAdmin, asyncHandler(async (_req: express.Request, res: express.Response) => {
+// @desc    Get all users (requires VIEW_USERS privilege)
+// @access  Private/Privilege-based
+router.get('/', auth, requirePrivilege('VIEW_USERS'), asyncHandler(async (_req: express.Request, res: express.Response) => {
   const users = await User.find()
     .select('-password')
     .populate('storeId', 'name address.city address.region')
@@ -92,9 +101,9 @@ router.get('/:id', auth, asyncHandler(async (req: express.Request, res: express.
 }));
 
 // @route   POST /api/users
-// @desc    Create new user (Admin only)
-// @access  Private/Admin
-router.post('/', auth, requireAdmin, validateUser, asyncHandler(async (req: express.Request, res: express.Response) => {
+// @desc    Create new user (requires CREATE_USERS privilege)
+// @access  Private/Privilege-based
+router.post('/', auth, requireCreateUsers, validateUser, asyncHandler(async (req: express.Request, res: express.Response) => {
   // Check for validation errors
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -145,9 +154,9 @@ router.post('/', auth, requireAdmin, validateUser, asyncHandler(async (req: expr
 }));
 
 // @route   PUT /api/users/:id
-// @desc    Update user
-// @access  Private
-router.put('/:id', auth, validateUserUpdate, asyncHandler(async (req: express.Request, res: express.Response) => {
+// @desc    Update user (requires EDIT_USERS privilege)
+// @access  Private/Privilege-based
+router.put('/:id', auth, requireEditUsers, validateUserUpdate, asyncHandler(async (req: express.Request, res: express.Response) => {
   // Check for validation errors
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -194,9 +203,9 @@ router.put('/:id', auth, validateUserUpdate, asyncHandler(async (req: express.Re
 }));
 
 // @route   DELETE /api/users/:id
-// @desc    Delete user (Admin only)
-// @access  Private/Admin
-router.delete('/:id', auth, requireAdmin, asyncHandler(async (req: express.Request, res: express.Response) => {
+// @desc    Delete user (requires DELETE_USERS privilege)
+// @access  Private/Privilege-based
+router.delete('/:id', auth, requireDeleteUsers, asyncHandler(async (req: express.Request, res: express.Response) => {
   const userId = req.params.id;
 
   // Prevent admin from deleting themselves
@@ -227,12 +236,12 @@ router.delete('/:id', auth, requireAdmin, asyncHandler(async (req: express.Reque
   });
 }));
 
-// @route   PATCH /api/users/:id/activate
-// @desc    Activate user (Admin only)
-// @access  Private/Admin
-router.patch('/:id/activate', auth, requireAdmin, asyncHandler(async (req: express.Request, res: express.Response) => {
+// @route   POST /api/users/:id/activate
+// @desc    Activate user account (requires EDIT_USERS privilege)
+// @access  Private/Privilege-based
+router.post('/:id/activate', auth, requireEditUsers, asyncHandler(async (req: express.Request, res: express.Response) => {
   const userId = req.params.id;
-
+  
   const user = await User.findById(userId);
   if (!user) {
     return res.status(404).json({
@@ -248,7 +257,68 @@ router.patch('/:id/activate', auth, requireAdmin, asyncHandler(async (req: expre
 
   res.json({
     success: true,
-    message: 'User activated successfully'
+    message: 'User activated successfully',
+    data: { user: { id: user._id, email: user.email, isActive: user.isActive } }
+  });
+}));
+
+// @route   POST /api/users/:id/deactivate
+// @desc    Deactivate user account (requires EDIT_USERS privilege)
+// @access  Private/Privilege-based
+router.post('/:id/deactivate', auth, requireEditUsers, asyncHandler(async (req: express.Request, res: express.Response) => {
+  const userId = req.params.id;
+  
+  const user = await User.findById(userId);
+  if (!user) {
+    return res.status(404).json({
+      success: false,
+      message: 'User not found'
+    });
+  }
+
+  user.isActive = false;
+  await user.save();
+
+  logger.info(`User deactivated: ${user.email}`);
+
+  res.json({
+    success: true,
+    message: 'User deactivated successfully',
+    data: { user: { id: user._id, email: user.email, isActive: user.isActive } }
+  });
+}));
+
+// @route   POST /api/users/:id/change-role
+// @desc    Change user role (requires both EDIT_USERS and specific role management privileges)
+// @access  Private/Privilege-based
+router.post('/:id/change-role', auth, requireAllPrivileges(['EDIT_USERS', 'MANAGE_INVENTORY']), asyncHandler(async (req: express.Request, res: express.Response) => {
+  const { roleId } = req.body;
+  const userId = req.params.id;
+
+  if (!roleId) {
+    return res.status(400).json({
+      success: false,
+      message: 'Role ID is required'
+    });
+  }
+
+  const user = await User.findById(userId);
+  if (!user) {
+    return res.status(404).json({
+      success: false,
+      message: 'User not found'
+    });
+  }
+
+  user.roleId = roleId;
+  await user.save();
+
+  logger.info(`User role changed: ${user.email} to role: ${roleId}`);
+
+  res.json({
+    success: true,
+    message: 'User role changed successfully',
+    data: { user: { id: user._id, email: user.email, roleId: user.roleId } }
   });
 }));
 

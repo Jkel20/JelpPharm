@@ -7,7 +7,7 @@ export interface IUser extends Document {
   email: string;
   phone?: string;
   password: string;
-  role: 'Administrator' | 'Pharmacist' | 'Cashier' | 'Store Manager';
+  roleId: mongoose.Types.ObjectId;
   storeId?: mongoose.Types.ObjectId;
   isActive: boolean;
   isLocked: boolean;
@@ -70,19 +70,17 @@ const userSchema = new Schema<IUser>({
       message: 'Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character'
     }
   },
-  role: {
-    type: String,
-    required: [true, 'User role is required'],
-    enum: {
-      values: ['Administrator', 'Pharmacist', 'Cashier', 'Store Manager'],
-      message: 'Role must be Administrator, Pharmacist, Cashier, or Store Manager'
-    }
+  roleId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Role',
+    required: [true, 'User role is required']
   },
   storeId: {
     type: Schema.Types.ObjectId,
     ref: 'Store',
     required: function(this: IUser) {
-      return this.role !== 'Administrator';
+      // This will be handled in pre-save middleware
+      return false;
     }
   },
   isActive: {
@@ -129,7 +127,7 @@ const userSchema = new Schema<IUser>({
 userSchema.index({ email: 1 });
 userSchema.index({ username: 1 });
 userSchema.index({ storeId: 1 });
-userSchema.index({ role: 1 });
+userSchema.index({ roleId: 1 });
 userSchema.index({ isActive: 1 });
 
 // Virtual for checking if account is locked
@@ -151,14 +149,29 @@ userSchema.pre('save', async function(next) {
 });
 
 // Pre-save middleware to validate store assignment
-userSchema.pre('save', function(next) {
-  if (this.role === 'Administrator' && this.storeId) {
-    return next(new Error('Administrators cannot be assigned to specific stores'));
+userSchema.pre('save', async function(next) {
+  try {
+    // Populate role to check if it's Administrator
+    if (this.roleId) {
+      const Role = mongoose.model('Role');
+      const role = await Role.findById(this.roleId);
+      
+      if (!role) {
+        return next(new Error('Invalid role specified'));
+      }
+      
+      if (role.code === 'ADMINISTRATOR' && this.storeId) {
+        return next(new Error('Administrators cannot be assigned to specific stores'));
+      }
+      
+      if (role.code !== 'ADMINISTRATOR' && !this.storeId) {
+        return next(new Error('Non-administrator users must be assigned to a store'));
+      }
+    }
+    next();
+  } catch (error) {
+    next(error as Error);
   }
-  if (this.role !== 'Administrator' && !this.storeId) {
-    return next(new Error('Non-administrator users must be assigned to a store'));
-  }
-  next();
 });
 
 // Method to compare password

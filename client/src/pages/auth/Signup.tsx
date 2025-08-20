@@ -85,11 +85,6 @@ export const Signup: React.FC = () => {
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            {/* Debug Info */}
-            <div className="bg-gray-100 p-3 rounded text-xs">
-              <p>Form State: isValid={isValid.toString()}, isDirty={isDirty.toString()}</p>
-              <p>Watched values: {JSON.stringify({ fullName: watch('fullName'), email: watch('email'), phone: watch('phone'), role: watch('role'), password: watch('password') })}</p>
-            </div>
             {/* Full Name Field */}
             <div>
               <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-2">
@@ -183,10 +178,8 @@ export const Signup: React.FC = () => {
                 }`}
               >
                 <option value="">Select your role</option>
-                <option value="Pharmacist">Pharmacist</option>
-                <option value="Cashier">Cashier</option>
-                <option value="Store Manager">Store Manager</option>
-                <option value="Administrator">Administrator</option>
+                <option value="ADMINISTRATOR">Administrator - Full system access</option>
+                <option value="PHARMACIST">Pharmacist - Professional medication management</option>
               </select>
               {errors.role && (
                 <p className="mt-1 text-sm text-red-600">{errors.role.message}</p>
@@ -196,7 +189,7 @@ export const Signup: React.FC = () => {
             {/* Store Name Field (conditional) */}
             <div>
               <label htmlFor="storeName" className="block text-sm font-medium text-gray-700 mb-2">
-                Store Name (Optional)
+                Store Name {watch('role') === 'PHARMACIST' && <span className="text-red-500">*</span>}
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -207,15 +200,20 @@ export const Signup: React.FC = () => {
                   type="text"
                   placeholder="Enter store name if applicable"
                   className="pl-10 flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-                  {...register('storeName')}
+                  {...register('storeName', {
+                    required: watch('role') === 'PHARMACIST' ? 'Store name is required for Pharmacists' : false
+                  })}
                 />
+                {errors.storeName && (
+                  <p className="mt-1 text-sm text-red-600">{errors.storeName.message}</p>
+                )}
               </div>
             </div>
 
             {/* Store Address Field (conditional) */}
             <div>
               <label htmlFor="storeAddress" className="block text-sm font-medium text-gray-700 mb-2">
-                Store Address (Optional)
+                Store Address {watch('role') === 'PHARMACIST' && <span className="text-red-500">*</span>}
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -226,8 +224,13 @@ export const Signup: React.FC = () => {
                   type="text"
                   placeholder="Enter store address if applicable"
                   className="pl-10 flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-                  {...register('storeAddress')}
+                  {...register('storeAddress', {
+                    required: watch('role') === 'PHARMACIST' ? 'Store address is required for Pharmacists' : false
+                  })}
                 />
+                {errors.storeAddress && (
+                  <p className="mt-1 text-sm text-red-600">{errors.storeAddress.message}</p>
+                )}
               </div>
             </div>
 

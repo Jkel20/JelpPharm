@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { User } from '../models/User';
 import { logger } from '../config/logger';
+import mongoose from 'mongoose';
 
 // Extend Express Request interface to include user
 declare global {
@@ -182,3 +183,187 @@ export const requireStoreManagerOrHigher = requireRole(['Administrator', 'Store 
 
 // Cashier or higher middleware
 export const requireCashierOrHigher = requireRole(['Administrator', 'Pharmacist', 'Cashier', 'Store Manager']);
+
+// Privilege-based access control middleware
+export const requirePrivilege = (privilegeCode: string) => {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          message: 'Authentication required'
+        });
+      }
+
+      // Import the userHasPrivilege function
+      const { userHasPrivilege } = await import('../data/seedRoles');
+      
+      const hasPrivilege = await userHasPrivilege(req.user.userId, privilegeCode);
+      
+      if (!hasPrivilege) {
+        logger.warn(`User ${req.user.userId} attempted to access resource requiring privilege: ${privilegeCode}`);
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied. Insufficient privileges for this action.',
+          requiredPrivilege: privilegeCode
+        });
+      }
+
+      next();
+    } catch (error) {
+      logger.error(`Error checking privilege ${privilegeCode}:`, error);
+      return res.status(500).json({
+        success: false,
+        message: 'Error verifying user privileges'
+      });
+    }
+  };
+};
+
+// Multiple privileges middleware (user must have ALL specified privileges)
+export const requireAllPrivileges = (privilegeCodes: string[]) => {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          message: 'Authentication required'
+        });
+      }
+
+      const { userHasPrivilege } = await import('../data/seedRoles');
+      
+      // Check if user has ALL required privileges
+      for (const privilegeCode of privilegeCodes) {
+        const hasPrivilege = await userHasPrivilege(req.user.userId, privilegeCode);
+        if (!hasPrivilege) {
+          logger.warn(`User ${req.user.userId} missing required privilege: ${privilegeCode}`);
+          return res.status(403).json({
+            success: false,
+            message: 'Access denied. Insufficient privileges for this action.',
+            missingPrivilege: privilegeCode,
+            requiredPrivileges: privilegeCodes
+          });
+        }
+      }
+
+      next();
+    } catch (error) {
+      logger.error(`Error checking multiple privileges:`, error);
+      return res.status(500).json({
+        success: false,
+        message: 'Error verifying user privileges'
+      });
+    }
+  };
+};
+
+// Any privilege middleware (user must have AT LEAST ONE of the specified privileges)
+export const requireAnyPrivilege = (privilegeCodes: string[]) => {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          message: 'Authentication required'
+        });
+      }
+
+      const { userHasPrivilege } = await import('../data/seedRoles');
+      
+      // Check if user has AT LEAST ONE of the required privileges
+      for (const privilegeCode of privilegeCodes) {
+        const hasPrivilege = await userHasPrivilege(req.user.userId, privilegeCode);
+        if (hasPrivilege) {
+          return next(); // User has at least one required privilege
+        }
+      }
+
+      logger.warn(`User ${req.user.userId} missing all required privileges: ${privilegeCodes.join(', ')}`);
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Insufficient privileges for this action.',
+        requiredPrivileges: privilegeCodes
+      });
+    } catch (error) {
+      logger.error(`Error checking any privilege:`, error);
+      return res.status(500).json({
+        success: false,
+        message: 'Error verifying user privileges'
+      });
+    }
+  };
+};
+
+// Category-based privilege middleware (user must have ANY privilege in the specified category)
+export const requireCategoryPrivilege = (category: string) => {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          message: 'Authentication required'
+        });
+      }
+
+      // Get user's role and check if it has any privilege in the specified category
+      const User = mongoose.model('User');
+      const user = await User.findById(req.user.userId).populate({
+        path: 'roleId',
+        populate: {
+          path: 'privileges'
+        }
+      });
+
+      if (!user || !user.roleId) {
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied. User role not found.'
+        });
+      }
+
+      const role = user.roleId as any;
+      const hasCategoryPrivilege = role.privileges.some((privilege: any) => 
+        privilege.category === category && privilege.isActive
+      );
+
+      if (!hasCategoryPrivilege) {
+        logger.warn(`User ${req.user.userId} missing privileges in category: ${category}`);
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied. Insufficient privileges in this category.',
+          requiredCategory: category
+        });
+      }
+
+      next();
+    } catch (error) {
+      logger.error(`Error checking category privilege:`, error);
+      return res.status(500).json({
+        success: false,
+        message: 'Error verifying user privileges'
+      });
+    }
+  };
+};
+
+// Predefined privilege combinations for common operations
+export const requireUserManagement = requireCategoryPrivilege('user_management');
+export const requireInventoryAccess = requireCategoryPrivilege('inventory');
+export const requireSalesAccess = requireCategoryPrivilege('sales');
+export const requirePrescriptionAccess = requireCategoryPrivilege('prescriptions');
+export const requireReportAccess = requireCategoryPrivilege('reports');
+export const requireSystemAccess = requireCategoryPrivilege('system');
+
+// Specific privilege middleware for common operations
+export const requireCreateUsers = requirePrivilege('CREATE_USERS');
+export const requireEditUsers = requirePrivilege('EDIT_USERS');
+export const requireDeleteUsers = requirePrivilege('DELETE_USERS');
+export const requireManageInventory = requirePrivilege('MANAGE_INVENTORY');
+export const requireAdjustStock = requirePrivilege('ADJUST_STOCK');
+export const requireCreateSales = requirePrivilege('CREATE_SALES');
+export const requireManageSales = requirePrivilege('MANAGE_SALES');
+export const requireManagePrescriptions = requirePrivilege('MANAGE_PRESCRIPTIONS');
+export const requireDispenseMedications = requirePrivilege('DISPENSE_MEDICATIONS');
+export const requireGenerateReports = requirePrivilege('GENERATE_REPORTS');
+export const requireSystemSettings = requirePrivilege('SYSTEM_SETTINGS');

@@ -313,14 +313,15 @@ router.get('/recent-activities', auth, async (req, res) => {
     const recentUsers = await User.find()
       .sort({ createdAt: -1 })
       .limit(2)
-      .select('fullName role createdAt');
+      .select('fullName roleId createdAt')
+      .populate('roleId', 'code');
 
     recentUsers.forEach(user => {
       const timeAgo = getTimeAgo(user.createdAt);
       activities.push({
         id: `user-${user._id}`,
         action: 'User registered',
-        item: `${user.role}: ${user.fullName}`,
+        item: `${(user.roleId as any)?.code || 'Unknown'}: ${user.fullName}`,
         time: timeAgo,
         type: 'info',
         timestamp: user.createdAt
