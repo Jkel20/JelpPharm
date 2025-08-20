@@ -35,8 +35,7 @@ app.use(helmet());
 app.use(cors({
   origin: process.env['NODE_ENV'] === 'production' 
     ? [
-        process.env['CORS_ORIGIN'] || 'https://jelppharm-5vcm.onrender.com',
-        'https://jelppharm-5vcm.onrender.com', // Your specific Render service
+        process.env['CORS_ORIGIN'] || 'https://jelppharm-server.onrender.com',
         /\.onrender\.com$/, // Allow all Render subdomains
         /\.vercel\.app$/,   // Allow Vercel deployments
         /\.netlify\.app$/   // Allow Netlify deployments
