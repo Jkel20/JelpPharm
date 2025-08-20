@@ -522,3 +522,5 @@ If you encounter issues:
 **JelpPharm PMS** - Empowering pharmacies in Ghana with modern, compliant, and efficient management solutions.
 
 *Built with ❤️ for the Ghana pharmaceutical community*
+#   U p d a t e d   0 8 / 2 0 / 2 0 2 5   1 1 : 4 7 : 0 5  
+ 
