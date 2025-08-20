@@ -76,8 +76,8 @@ EMAIL_PASS=comicskwabena610
 
 **API Configuration:**
 ```
-API_URL=https://YOUR-SERVICE-NAME.onrender.com/api
-CORS_ORIGIN=https://YOUR-SERVICE-NAME.onrender.com
+API_URL=https://jelppharm-pms.onrender.com/api
+CORS_ORIGIN=https://jelppharm-pms.onrender.com
 ```
 
 ### **3.2 Optional Environment Variables**
@@ -117,7 +117,7 @@ Watch the build logs for:
 ## 🔍 **Step 5: Verify Deployment**
 
 ### **5.1 Health Check**
-Visit: `https://YOUR-SERVICE-NAME.onrender.com/health`
+Visit: `https://jelppharm-pms.onrender.com/health`
 Expected response:
 ```json
 {
@@ -129,11 +129,11 @@ Expected response:
 ```
 
 ### **5.2 Frontend Access**
-Visit: `https://YOUR-SERVICE-NAME.onrender.com`
+Visit: `https://jelppharm-pms.onrender.com`
 Should show your React app
 
 ### **5.3 API Endpoints**
-Test: `https://YOUR-SERVICE-NAME.onrender.com/api/auth/login`
+Test: `https://jelppharm-pms.onrender.com/api/auth/login`
 
 ## 📝 **Step 6: Update Client Configuration**
 
@@ -142,8 +142,8 @@ After deployment, update your client environment:
 
 **Create `client/.env.production`:**
 ```bash
-REACT_APP_API_URL=https://YOUR-SERVICE-NAME.onrender.com/api
-REACT_APP_SERVER_URL=https://YOUR-SERVICE-NAME.onrender.com
+REACT_APP_API_URL=https://jelppharm-pms.onrender.com/api
+REACT_APP_SERVER_URL=https://jelppharm-pms.onrender.com
 ```
 
 ### **6.2 Rebuild and Deploy**
