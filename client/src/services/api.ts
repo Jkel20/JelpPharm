@@ -11,6 +11,12 @@ const api = axios.create({
   },
 });
 
+// Debug logging
+console.log('🔍 Axios API Debug:');
+console.log('REACT_APP_API_URL:', process.env.REACT_APP_API_URL);
+console.log('window.location.hostname:', window.location.hostname);
+console.log('Final baseURL:', api.defaults.baseURL);
+
 // Request interceptor to add auth token
 api.interceptors.request.use(
   (config) => {

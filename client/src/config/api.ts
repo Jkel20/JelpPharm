@@ -40,9 +40,19 @@ export const API_CONFIG = {
   },
 };
 
+// Debug logging to see what's being loaded
+console.log('🔍 API Config Debug:');
+console.log('REACT_APP_API_URL:', process.env.REACT_APP_API_URL);
+console.log('REACT_APP_SERVER_URL:', process.env.REACT_APP_SERVER_URL);
+console.log('window.location.hostname:', window.location.hostname);
+console.log('Final BASE_URL:', API_CONFIG.BASE_URL);
+console.log('Final SERVER_URL:', API_CONFIG.SERVER_URL);
+
 // Helper function to build full API URLs
 export const buildApiUrl = (endpoint: string): string => {
-  return `${API_CONFIG.BASE_URL}${endpoint}`;
+  const fullUrl = `${API_CONFIG.BASE_URL}${endpoint}`;
+  console.log(`🔗 Building API URL: ${endpoint} -> ${fullUrl}`);
+  return fullUrl;
 };
 
 // Helper function to get auth token from localStorage
