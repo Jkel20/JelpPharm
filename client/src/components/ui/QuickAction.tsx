@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
+import { gradients, combineClasses } from '../../utils/classUtils';
 
 interface QuickActionProps {
   title: string;
@@ -23,29 +24,29 @@ export const QuickAction: React.FC<QuickActionProps> = ({
     navigate(href);
   };
 
-  // Safe color mapping to avoid dynamic class generation issues
+  // Safe color mapping using the utility system
   const getColorClasses = (color: string) => {
     const colorMap: Record<string, { bg: string; border: string }> = {
       'from-blue-500 to-blue-600': { 
-        bg: 'bg-gradient-to-r from-blue-500 to-blue-600', 
+        bg: gradients.blue['500-to-600'], 
         border: 'group-hover:border-blue-500' 
       },
       'from-green-500 to-emerald-600': { 
-        bg: 'bg-gradient-to-r from-green-500 to-emerald-600', 
+        bg: gradients.green['500-to-emerald-600'], 
         border: 'group-hover:border-emerald-500' 
       },
       'from-purple-500 to-violet-600': { 
-        bg: 'bg-gradient-to-r from-purple-500 to-violet-600', 
+        bg: gradients.purple['500-to-violet-600'], 
         border: 'group-hover:border-violet-500' 
       },
       'from-orange-500 to-red-600': { 
-        bg: 'bg-gradient-to-r from-orange-500 to-red-600', 
+        bg: gradients.orange['500-to-red-600'], 
         border: 'group-hover:border-red-500' 
       }
     };
     
     return colorMap[color] || { 
-      bg: 'bg-gradient-to-r from-blue-500 to-blue-600', 
+      bg: gradients.blue['500-to-600'], 
       border: 'group-hover:border-blue-500' 
     };
   };
@@ -55,13 +56,24 @@ export const QuickAction: React.FC<QuickActionProps> = ({
   return (
     <button
       onClick={handleClick}
-      className="group relative bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-lg hover:border-gray-300 transition-all duration-200 transform hover:-translate-y-1 text-left"
+      className={combineClasses(
+        "group relative bg-white rounded-xl p-6 shadow-sm border border-gray-200",
+        "hover:shadow-lg hover:border-gray-300 transition-all duration-200",
+        "transform hover:-translate-y-1 text-left"
+      )}
     >
       {/* Background gradient overlay */}
-      <div className={`absolute inset-0 ${colorClasses.bg} opacity-0 group-hover:opacity-5 rounded-xl transition-opacity duration-200`} />
+      <div className={combineClasses(
+        "absolute inset-0 opacity-0 group-hover:opacity-5 rounded-xl transition-opacity duration-200",
+        colorClasses.bg
+      )} />
       
       {/* Icon */}
-      <div className={`w-12 h-12 ${colorClasses.bg} rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-200`}>
+      <div className={combineClasses(
+        "w-12 h-12 rounded-lg flex items-center justify-center mb-4",
+        "group-hover:scale-110 transition-transform duration-200",
+        colorClasses.bg
+      )}>
         <div className="text-white">
           {icon}
         </div>
@@ -84,7 +96,11 @@ export const QuickAction: React.FC<QuickActionProps> = ({
       </div>
       
       {/* Hover effect border */}
-      <div className={`absolute inset-0 rounded-xl border-2 border-transparent opacity-0 group-hover:opacity-20 ${colorClasses.border} transition-all duration-200`} />
+      <div className={combineClasses(
+        "absolute inset-0 rounded-xl border-2 border-transparent opacity-0",
+        "group-hover:opacity-20 transition-all duration-200",
+        colorClasses.border
+      )} />
     </button>
   );
 };

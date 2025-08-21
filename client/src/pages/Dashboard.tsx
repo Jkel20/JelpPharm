@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { QuickAction } from '../components/ui/QuickAction';
+import { gradients, statusColors } from '../utils/classUtils';
 
 interface Stat {
   value: string;
@@ -65,7 +66,7 @@ export const Dashboard: React.FC = () => {
           subtitle: 'Full system access with all privileges',
           description: 'You have complete control over the pharmacy management system. Manage users, roles, privileges, system settings, and access all features.',
           roleBadge: 'SYSTEM_ADMIN',
-          roleColor: 'bg-gradient-to-r from-red-500 to-pink-600',
+          roleColor: gradients.red['500-to-pink-600'],
           privileges: [
             'Full system access',
             'User management (create, edit, delete)',
@@ -84,7 +85,7 @@ export const Dashboard: React.FC = () => {
           subtitle: 'Pharmaceutical operations and patient care',
           description: 'Professional pharmacist with comprehensive medication and inventory management privileges. Manage prescriptions, dispense medications, manage inventory, create sales, and generate reports.',
           roleBadge: 'PHARMACEUTICAL_PROFESSIONAL',
-          roleColor: 'bg-gradient-to-r from-blue-500 to-cyan-600',
+          roleColor: gradients.blue['500-to-600'],
           privileges: [
             'Prescription management',
             'Inventory access and management',
@@ -103,7 +104,7 @@ export const Dashboard: React.FC = () => {
           subtitle: 'Business operations and staff oversight',
           description: 'Store-level manager with oversight of operations, staff, and business performance. Manage inventory, sales, prescriptions, users within your store, and generate comprehensive reports.',
           roleBadge: 'BUSINESS_MANAGER',
-          roleColor: 'bg-gradient-to-r from-green-500 to-emerald-600',
+          roleColor: gradients.green['500-to-emerald-600'],
           privileges: [
             'Business performance monitoring',
             'Staff management and oversight',
@@ -122,7 +123,7 @@ export const Dashboard: React.FC = () => {
           subtitle: 'Sales transactions and customer service',
           description: 'Front-line staff member responsible for sales transactions and customer service. Process sales, view inventory, handle prescriptions, and generate basic reports.',
           roleBadge: 'FRONT_LINE_STAFF',
-          roleColor: 'bg-gradient-to-r from-purple-500 to-violet-600',
+          roleColor: gradients.purple['500-to-violet-600'],
           privileges: [
             'Sales transaction processing',
             'Inventory checking for customers',
@@ -140,7 +141,7 @@ export const Dashboard: React.FC = () => {
           subtitle: 'Overview and key metrics',
           description: 'Welcome to your personalized dashboard. View key metrics and access features based on your role and privileges.',
           roleBadge: 'USER',
-          roleColor: 'bg-gradient-to-r from-gray-500 to-slate-600',
+          roleColor: gradients.gray['500-to-slate-600'],
           privileges: [
             'View assigned features',
             'Access role-specific content',
@@ -162,7 +163,7 @@ export const Dashboard: React.FC = () => {
         value: stats[0]?.value || '0',
         change: stats[0]?.change || 'Loading...',
         icon: <Package className="w-6 h-6 text-white" />,
-        color: 'bg-gradient-to-r from-blue-500 to-blue-600',
+        color: gradients.blue['500-to-600'],
         trend: 'up'
       });
     }
@@ -173,7 +174,7 @@ export const Dashboard: React.FC = () => {
         value: stats[1]?.value || '₵0',
         change: stats[1]?.change || 'Loading...',
         icon: <ShoppingCart className="w-6 h-6 text-white" />,
-        color: 'bg-gradient-to-r from-green-500 to-emerald-600',
+        color: gradients.green['500-to-emerald-600'],
         trend: 'up'
       });
     }
@@ -184,7 +185,7 @@ export const Dashboard: React.FC = () => {
         value: stats[2]?.value || '0',
         change: stats[2]?.change || 'Loading...',
         icon: <FileText className="w-6 h-6 text-white" />,
-        color: 'bg-gradient-to-r from-purple-500 to-violet-600',
+        color: gradients.purple['500-to-violet-600'],
         trend: 'stable'
       });
     }
@@ -195,23 +196,12 @@ export const Dashboard: React.FC = () => {
         value: stats[3]?.value || '0',
         change: stats[3]?.change || 'Loading...',
         icon: <Users className="w-6 h-6 text-white" />,
-        color: 'bg-gradient-to-r from-orange-500 to-red-600',
+        color: gradients.orange['500-to-red-600'],
         trend: 'up'
       });
     }
 
     return privilegeStats;
-  };
-
-  // Safe color mapping for stats
-  const getStatColorClasses = (color: string) => {
-    const colorMap: Record<string, string> = {
-      'bg-gradient-to-r from-blue-500 to-blue-600': 'bg-gradient-to-r from-blue-500 to-blue-600',
-      'bg-gradient-to-r from-green-500 to-emerald-600': 'bg-gradient-to-r from-green-500 to-emerald-600',
-      'bg-gradient-to-r from-purple-500 to-violet-600': 'bg-gradient-to-r from-purple-500 to-violet-600',
-      'bg-gradient-to-r from-orange-500 to-red-600': 'bg-gradient-to-r from-orange-500 to-red-600'
-    };
-    return colorMap[color] || 'bg-gradient-to-r from-blue-500 to-blue-600';
   };
 
   // Safe trend color mapping
@@ -226,33 +216,7 @@ export const Dashboard: React.FC = () => {
 
   // Safe severity color mapping
   const getSeverityColorClasses = (severity: string) => {
-    const severityMap: Record<string, { border: string; bg: string; icon: string; text: string; content: string; button: string }> = {
-      'danger': {
-        border: 'border-l-red-500 bg-red-50',
-        bg: 'bg-red-100',
-        icon: 'text-red-600',
-        text: 'text-red-800',
-        content: 'text-red-700',
-        button: 'bg-red-600 hover:bg-red-700 text-white'
-      },
-      'warning': {
-        border: 'border-l-yellow-500 bg-yellow-50',
-        bg: 'bg-yellow-100',
-        icon: 'text-yellow-600',
-        text: 'text-yellow-800',
-        content: 'text-yellow-700',
-        button: 'bg-yellow-600 hover:bg-yellow-700 text-white'
-      },
-      'info': {
-        border: 'border-l-blue-500 bg-blue-50',
-        bg: 'bg-blue-100',
-        icon: 'text-blue-600',
-        text: 'text-blue-800',
-        content: 'text-blue-700',
-        button: 'bg-blue-600 hover:bg-blue-700 text-white'
-      }
-    };
-    return severityMap[severity] || severityMap['info'];
+    return statusColors[severity as keyof typeof statusColors] || statusColors.info;
   };
 
   // Get privilege-based quick actions
@@ -416,7 +380,7 @@ export const Dashboard: React.FC = () => {
         {/* Dashboard Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {getPrivilegeBasedStats().map((stat, index) => (
-            <div key={index} className={`${getStatColorClasses(stat.color)} rounded-xl p-6 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-1`}>
+            <div key={index} className={`${stat.color} rounded-xl p-6 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-1`}>
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm opacity-90">{stat.title}</p>
@@ -559,7 +523,7 @@ export const Dashboard: React.FC = () => {
                           <h3 className={`text-lg font-semibold mb-2 ${getSeverityColorClasses(alert.severity).text}`}>
                             {alert.title}
                           </h3>
-                          <p className={`text-sm leading-relaxed mb-3 ${getSeverityColorClasses(alert.severity).content}`}>
+                          <p className={`text-sm leading-relaxed mb-3 ${getSeverityColorClasses(alert.severity).text}`}>
                             {alert.message}
                           </p>
                           {alert.drugs && alert.drugs.length > 0 && (
