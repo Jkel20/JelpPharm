@@ -106,11 +106,36 @@ app.use('/static', express.static(path.join(__dirname, '../../client/build/stati
     }
   }
 }));
+
+// Serve manifest.json with proper headers
+app.get('/manifest.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/manifest+json');
+  res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+  res.sendFile(path.join(__dirname, '../../client/build/manifest.json'));
+});
+
+// Serve other static files
 app.use(express.static(path.join(__dirname, '../../client/build')));
 
 // Catch-all handler: send back React's index.html file for any non-API routes
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../../client/build/index.html'));
+  // Skip API routes
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'API endpoint not found' });
+  }
+  
+  // Skip static file requests
+  if (req.path.startsWith('/static/') || req.path === '/manifest.json') {
+    return res.status(404).json({ error: 'Static file not found' });
+  }
+  
+  // For all other routes, serve the React app
+  res.sendFile(path.join(__dirname, '../../client/build/index.html'), (err) => {
+    if (err) {
+      console.error('Error serving index.html:', err);
+      res.status(500).json({ error: 'Failed to serve application' });
+    }
+  });
 });
 
 // Error handling middleware

@@ -4,13 +4,13 @@ export const API_CONFIG = {
   BASE_URL: process.env.REACT_APP_API_URL || 
     (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
       ? 'http://localhost:5000/api' 
-      : 'https://jelppharm-pms.onrender.com/api'), // Point to your new server service
+      : 'https://jelppharm-pms.onrender.com/api'),
   
   // Server URL
   SERVER_URL: process.env.REACT_APP_SERVER_URL || 
     (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
       ? 'http://localhost:5000' 
-      : 'https://jelppharm-pms.onrender.com'), // Point to your new server service
+      : 'https://jelppharm-pms.onrender.com'),
   
   // API Endpoints
   ENDPOINTS: {
@@ -32,7 +32,7 @@ export const API_CONFIG = {
   },
   
   // Request timeout (in milliseconds)
-  TIMEOUT: 10000,
+  TIMEOUT: 15000, // Increased timeout for production
   
   // Default headers
   DEFAULT_HEADERS: {
@@ -40,32 +40,49 @@ export const API_CONFIG = {
   },
 };
 
-// Debug logging to see what's being loaded
-console.log('🔍 API Config Debug:');
-console.log('REACT_APP_API_URL:', process.env.REACT_APP_API_URL);
-console.log('REACT_APP_SERVER_URL:', process.env.REACT_APP_SERVER_URL);
-console.log('window.location.hostname:', window.location.hostname);
-console.log('Final BASE_URL:', API_CONFIG.BASE_URL);
-console.log('Final SERVER_URL:', API_CONFIG.SERVER_URL);
+// Debug logging only in development
+if (process.env.NODE_ENV === 'development') {
+  console.log('🔍 API Config Debug:');
+  console.log('REACT_APP_API_URL:', process.env.REACT_APP_API_URL);
+  console.log('REACT_APP_SERVER_URL:', process.env.REACT_APP_SERVER_URL);
+  console.log('window.location.hostname:', window.location.hostname);
+  console.log('Final BASE_URL:', API_CONFIG.BASE_URL);
+  console.log('Final SERVER_URL:', API_CONFIG.SERVER_URL);
+}
 
 // Helper function to build full API URLs
 export const buildApiUrl = (endpoint: string): string => {
   const fullUrl = `${API_CONFIG.BASE_URL}${endpoint}`;
-  console.log(`🔗 Building API URL: ${endpoint} -> ${fullUrl}`);
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`🔗 Building API URL: ${endpoint} -> ${fullUrl}`);
+  }
   return fullUrl;
 };
 
 // Helper function to get auth token from localStorage
 export const getAuthToken = (): string | null => {
-  return localStorage.getItem('token');
+  try {
+    return localStorage.getItem('token');
+  } catch (error) {
+    console.error('Error accessing localStorage:', error);
+    return null;
+  }
 };
 
 // Helper function to set auth token in localStorage
 export const setAuthToken = (token: string): void => {
-  localStorage.setItem('token', token);
+  try {
+    localStorage.setItem('token', token);
+  } catch (error) {
+    console.error('Error setting token in localStorage:', error);
+  }
 };
 
 // Helper function to remove auth token from localStorage
 export const removeAuthToken = (): void => {
-  localStorage.removeItem('token');
+  try {
+    localStorage.removeItem('token');
+  } catch (error) {
+    console.error('Error removing token from localStorage:', error);
+  }
 };

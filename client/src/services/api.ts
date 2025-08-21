@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { createUserFriendlyError, logError } from '../utils/errorHandler';
 
 // Create axios instance with base configuration
 const api = axios.create({
@@ -9,20 +10,29 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 15000, // 15 second timeout
 });
 
-// Debug logging
-console.log('🔍 Axios API Debug:');
-console.log('REACT_APP_API_URL:', process.env.REACT_APP_API_URL);
-console.log('window.location.hostname:', window.location.hostname);
-console.log('Final baseURL:', api.defaults.baseURL);
+// Debug logging only in development
+if (process.env.NODE_ENV === 'development') {
+  console.log('🔍 Axios API Debug:');
+  console.log('REACT_APP_API_URL:', process.env.REACT_APP_API_URL);
+  console.log('window.location.hostname:', window.location.hostname);
+  console.log('Final baseURL:', api.defaults.baseURL);
+}
 
 // Request interceptor to add auth token
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    try {
+      const token = localStorage.getItem('token');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    } catch (error) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error accessing localStorage in request interceptor:', error);
+      }
     }
     return config;
   },
@@ -35,12 +45,27 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
+    // Create user-friendly error
+    const appError = createUserFriendlyError(error);
+    
+    // Log error for debugging
+    logError(appError, 'API Interceptor');
+    
+    // Handle specific error types
+    if (appError.code === 'AUTH_ERROR') {
+      try {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      } catch (localStorageError) {
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Error clearing localStorage:', localStorageError);
+        }
+      }
       window.location.href = '/login';
     }
-    return Promise.reject(error);
+    
+    // Return the user-friendly error
+    return Promise.reject(appError);
   }
 );
 
