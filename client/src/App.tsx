@@ -93,26 +93,6 @@ const App: React.FC = () => {
           } 
         />
         <Route 
-          path="/dashboard/inventory-specialist" 
-          element={
-            <ProtectedRoute>
-              <MainLayout>
-                <Dashboard />
-              </MainLayout>
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/dashboard/data-analyst" 
-          element={
-            <ProtectedRoute>
-              <MainLayout>
-                <Dashboard />
-              </MainLayout>
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
           path="/inventory" 
           element={
             <ProtectedRoute>

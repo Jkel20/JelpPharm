@@ -47,7 +47,7 @@ const validateSignup = [
     .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
     .withMessage('Password must be at least 8 characters and contain uppercase, lowercase, digit, and special character'),
   body('role')
-    .isIn(['ADMINISTRATOR', 'PHARMACIST', 'STORE_MANAGER', 'CASHIER', 'INVENTORY_SPECIALIST', 'SALES_REPRESENTATIVE', 'DATA_ANALYST'])
+    .isIn(['ADMINISTRATOR', 'PHARMACIST', 'STORE_MANAGER', 'CASHIER'])
     .withMessage('Invalid role selected. Please select a valid role from the available options.'),
   body('storeId')
     .optional()
@@ -314,21 +314,7 @@ router.post('/login', authLimiter, validateLogin, async (req: express.Request, r
         dashboardType = 'cashier';
         requiredPrivilege = 'CREATE_SALES';
         break;
-      case 'INVENTORY_SPECIALIST':
-        dashboardRoute = '/dashboard/inventory-specialist';
-        dashboardType = 'inventory-specialist';
-        requiredPrivilege = 'MANAGE_INVENTORY';
-        break;
-      case 'SALES_REPRESENTATIVE':
-        dashboardRoute = '/dashboard/store-manager'; // Similar to store manager
-        dashboardType = 'sales-representative';
-        requiredPrivilege = 'MANAGE_INVENTORY';
-        break;
-      case 'DATA_ANALYST':
-        dashboardRoute = '/dashboard/data-analyst';
-        dashboardType = 'data-analyst';
-        requiredPrivilege = 'VIEW_REPORTS';
-        break;
+
       default:
         dashboardRoute = '/dashboard';
         dashboardType = 'general';

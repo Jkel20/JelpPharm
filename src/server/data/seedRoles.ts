@@ -156,27 +156,7 @@ const defaultRoles: Array<{
     privileges: [], // Will be populated with specific privileges
     isSystem: true
   },
-  {
-    name: 'Inventory Specialist',
-    description: 'Staff member focused on inventory management and stock control. Can view and manage inventory, adjust stock levels, track batches, and generate inventory reports. This role is designed for staff who specialize in inventory management.',
-    code: 'INVENTORY_SPECIALIST',
-    privileges: [], // Will be populated with specific privileges
-    isSystem: true
-  },
-  {
-    name: 'Sales Representative',
-    description: 'Staff member focused on sales and customer relationships. Can create and manage sales, view inventory, process prescriptions, and generate sales reports. This role is designed for staff who focus on sales and customer service.',
-    code: 'SALES_REPRESENTATIVE',
-    privileges: [], // Will be populated with specific privileges
-    isSystem: true
-  },
-  {
-    name: 'Data Analyst',
-    description: 'Staff member focused on reporting and data analysis. Can view all data, generate comprehensive reports, analyze trends, and export data for external analysis. This role is designed for staff who need to analyze business performance and trends.',
-    code: 'DATA_ANALYST',
-    privileges: [], // Will be populated with specific privileges
-    isSystem: true
-  }
+
 ];
 
 export async function seedRolesAndPrivileges() {
@@ -251,37 +231,7 @@ export async function seedRolesAndPrivileges() {
         ].includes(p.code))
         .map(p => p._id),
       
-      'INVENTORY_SPECIALIST': createdPrivileges
-        .filter(p => [
-          'VIEW_INVENTORY',
-          'MANAGE_INVENTORY',
-          'ADJUST_STOCK',
-          'VIEW_REPORTS',
-          'GENERATE_REPORTS'
-        ].includes(p.code))
-        .map(p => p._id),
-      
-      'SALES_REPRESENTATIVE': createdPrivileges
-        .filter(p => [
-          'VIEW_INVENTORY',
-          'VIEW_SALES',
-          'CREATE_SALES',
-          'MANAGE_SALES',
-          'VIEW_PRESCRIPTIONS',
-          'VIEW_REPORTS',
-          'GENERATE_REPORTS'
-        ].includes(p.code))
-        .map(p => p._id),
-      
-      'DATA_ANALYST': createdPrivileges
-        .filter(p => [
-          'VIEW_INVENTORY',
-          'VIEW_SALES',
-          'VIEW_PRESCRIPTIONS',
-          'VIEW_REPORTS',
-          'GENERATE_REPORTS'
-        ].includes(p.code))
-        .map(p => p._id)
+
     };
     
     // Create or update roles

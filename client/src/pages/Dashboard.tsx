@@ -271,56 +271,83 @@ export const Dashboard: React.FC = () => {
     fetchDashboardData();
   }, []);
 
-  // Get role-specific dashboard content
+  // Get role-specific dashboard content with detailed descriptions, privileges, and restrictions
   const getRoleSpecificContent = () => {
     switch (dashboardType) {
       case 'admin':
         return {
           title: '🎯 Administrator Dashboard',
           subtitle: 'Full system access with all privileges',
-          description: 'You have complete control over the pharmacy management system',
+          description: 'You have complete control over the pharmacy management system. Manage users, roles, privileges, system settings, and access all features.',
           roleBadge: 'SYSTEM_ADMIN',
-          roleColor: 'bg-red-500'
+          roleColor: 'bg-red-500',
+          privileges: [
+            'Full system access',
+            'User management (create, edit, delete)',
+            'Role and privilege administration',
+            'System settings and configuration',
+            'Database management',
+            'All reports and analytics',
+            'Complete audit logs'
+          ],
+          restrictions: 'None - Full access to all features',
+          accessLevel: 'SYSTEM_ADMIN'
         };
       case 'pharmacist':
         return {
           title: '💊 Pharmacist Dashboard',
           subtitle: 'Pharmaceutical operations and patient care',
-          description: 'Manage prescriptions, inventory, and ensure patient safety',
+          description: 'Professional pharmacist with comprehensive medication and inventory management privileges. Manage prescriptions, dispense medications, manage inventory, create sales, and generate reports.',
           roleBadge: 'PHARMACEUTICAL_PROFESSIONAL',
-          roleColor: 'bg-blue-500'
+          roleColor: 'bg-blue-500',
+          privileges: [
+            'View and manage users',
+            'Full inventory management',
+            'Stock adjustments and movements',
+            'Sales creation and management',
+            'Prescription management',
+            'Medication dispensing',
+            'Comprehensive reporting'
+          ],
+          restrictions: 'Cannot modify system settings or manage roles',
+          accessLevel: 'PHARMACEUTICAL_PROFESSIONAL'
         };
       case 'store-manager':
         return {
           title: '🏪 Store Manager Dashboard',
           subtitle: 'Business operations and performance oversight',
-          description: 'Monitor sales, manage staff, and optimize operations',
+          description: 'Store-level manager with oversight of operations, staff, and business performance. Manage inventory, sales, prescriptions, users within your store, and generate comprehensive reports.',
           roleBadge: 'BUSINESS_MANAGER',
-          roleColor: 'bg-green-500'
+          roleColor: 'bg-green-500',
+          privileges: [
+            'User management within store',
+            'Full inventory control',
+            'Sales oversight and management',
+            'Prescription management',
+            'Staff performance monitoring',
+            'Business analytics and reports',
+            'Store operations optimization'
+          ],
+          restrictions: 'Limited to store-level operations, cannot access system-wide settings',
+          accessLevel: 'STORE_MANAGER'
         };
       case 'cashier':
         return {
           title: '💰 Cashier Dashboard',
           subtitle: 'Sales transactions and customer service',
-          description: 'Process sales, check inventory, and assist customers',
+          description: 'Front-line staff member responsible for sales transactions and customer service. Create sales, view inventory, process prescriptions, and generate basic reports.',
           roleBadge: 'FRONT_LINE_STAFF',
-          roleColor: 'bg-purple-500'
-        };
-      case 'inventory-specialist':
-        return {
-          title: '📦 Inventory Specialist Dashboard',
-          subtitle: 'Stock control and inventory management',
-          description: 'Monitor stock levels, manage reorders, and track batches',
-          roleBadge: 'INVENTORY_PROFESSIONAL',
-          roleColor: 'bg-orange-500'
-        };
-      case 'data-analyst':
-        return {
-          title: '📊 Data Analyst Dashboard',
-          subtitle: 'Reporting and business intelligence',
-          description: 'Analyze trends, generate reports, and provide insights',
-          roleBadge: 'ANALYTICS_PROFESSIONAL',
-          roleColor: 'bg-indigo-500'
+          roleColor: 'bg-purple-500',
+          privileges: [
+            'View inventory levels',
+            'Create and process sales',
+            'View prescription information',
+            'Basic reporting access',
+            'Customer service tools',
+            'Transaction history'
+          ],
+          restrictions: 'Cannot modify inventory, manage users, or access system settings',
+          accessLevel: 'FRONT_LINE_STAFF'
         };
       default:
         return {
@@ -328,7 +355,10 @@ export const Dashboard: React.FC = () => {
           subtitle: 'System overview',
           description: 'Here\'s what\'s happening today',
           roleBadge: user?.role || 'USER',
-          roleColor: 'bg-gray-500'
+          roleColor: 'bg-gray-500',
+          privileges: ['Basic access'],
+          restrictions: 'Limited functionality',
+          accessLevel: 'USER'
         };
     }
   };
@@ -379,6 +409,43 @@ export const Dashboard: React.FC = () => {
                   day: 'numeric' 
                 })}
               </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Role Information Section */}
+      <div className="relative bg-gradient-to-r from-gray-50 to-blue-50 border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Privileges */}
+            <div className="bg-white/80 backdrop-blur-sm rounded-lg p-6 shadow-sm border border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+                <span className="text-green-600 mr-2">✅</span>
+                Your Privileges
+              </h3>
+              <ul className="space-y-2">
+                {roleContent.privileges.map((privilege, index) => (
+                  <li key={index} className="flex items-start">
+                    <span className="text-green-500 mr-2 mt-1">•</span>
+                    <span className="text-gray-700">{privilege}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Restrictions */}
+            <div className="bg-white/80 backdrop-blur-sm rounded-lg p-6 shadow-sm border border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+                <span className="text-orange-600 mr-2">⚠️</span>
+                Access Restrictions
+              </h3>
+              <p className="text-gray-700">{roleContent.restrictions}</p>
+              <div className="mt-3">
+                <span className="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                  Access Level: {roleContent.accessLevel}
+                </span>
+              </div>
             </div>
           </div>
         </div>

@@ -178,13 +178,10 @@ export const Signup: React.FC = () => {
                 }`}
               >
                 <option value="">Select your role</option>
-                <option value="ADMINISTRATOR">Administrator - Full system access</option>
-                <option value="PHARMACIST">Pharmacist - Professional medication management</option>
-                <option value="STORE_MANAGER">Store Manager - Inventory and operations management</option>
-                <option value="CASHIER">Cashier - Sales and customer service</option>
-                <option value="INVENTORY_SPECIALIST">Inventory Specialist - Stock management and tracking</option>
-                <option value="SALES_REPRESENTATIVE">Sales Representative - Customer relations and sales</option>
-                <option value="DATA_ANALYST">Data Analyst - Reports and analytics</option>
+                <option value="ADMINISTRATOR">Administrator - Full system access and control</option>
+                <option value="PHARMACIST">Pharmacist - Professional medication and prescription management</option>
+                <option value="STORE_MANAGER">Store Manager - Inventory and store operations management</option>
+                <option value="CASHIER">Cashier - Sales transactions and customer service</option>
               </select>
               {errors.role && (
                 <p className="mt-1 text-sm text-red-600">{errors.role.message}</p>
@@ -194,7 +191,7 @@ export const Signup: React.FC = () => {
             {/* Store Name Field (conditional) */}
             <div>
               <label htmlFor="storeName" className="block text-sm font-medium text-gray-700 mb-2">
-                Store Name {(watch('role') === 'PHARMACIST' || watch('role') === 'STORE_MANAGER' || watch('role') === 'CASHIER' || watch('role') === 'INVENTORY_SPECIALIST' || watch('role') === 'SALES_REPRESENTATIVE' || watch('role') === 'DATA_ANALYST') && <span className="text-red-500">*</span>}
+                Store Name {(watch('role') === 'PHARMACIST' || watch('role') === 'STORE_MANAGER' || watch('role') === 'CASHIER') && <span className="text-red-500">*</span>}
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -206,7 +203,7 @@ export const Signup: React.FC = () => {
                   placeholder="Enter store name if applicable"
                   className="pl-10 flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                   {...register('storeName', {
-                    required: (watch('role') === 'PHARMACIST' || watch('role') === 'STORE_MANAGER' || watch('role') === 'CASHIER' || watch('role') === 'INVENTORY_SPECIALIST' || watch('role') === 'SALES_REPRESENTATIVE' || watch('role') === 'DATA_ANALYST') ? 'Store name is required for this role' : false
+                    required: (watch('role') === 'PHARMACIST' || watch('role') === 'STORE_MANAGER' || watch('role') === 'CASHIER') ? 'Store name is required for this role' : false
                   })}
                 />
                 {errors.storeName && (
@@ -218,7 +215,7 @@ export const Signup: React.FC = () => {
             {/* Store Address Field (conditional) */}
             <div>
               <label htmlFor="storeAddress" className="block text-sm font-medium text-gray-700 mb-2">
-                Store Address {(watch('role') === 'PHARMACIST' || watch('role') === 'STORE_MANAGER' || watch('role') === 'CASHIER' || watch('role') === 'INVENTORY_SPECIALIST' || watch('role') === 'SALES_REPRESENTATIVE' || watch('role') === 'DATA_ANALYST') && <span className="text-red-500">*</span>}
+                Store Address {(watch('role') === 'PHARMACIST' || watch('role') === 'STORE_MANAGER' || watch('role') === 'CASHIER') && <span className="text-red-500">*</span>}
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -230,7 +227,7 @@ export const Signup: React.FC = () => {
                   placeholder="Enter store address if applicable"
                   className="pl-10 flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                   {...register('storeAddress', {
-                    required: (watch('role') === 'PHARMACIST' || watch('role') === 'STORE_MANAGER' || watch('role') === 'CASHIER' || watch('role') === 'INVENTORY_SPECIALIST' || watch('role') === 'SALES_REPRESENTATIVE' || watch('role') === 'DATA_ANALYST') ? 'Store address is required for this role' : false
+                    required: (watch('role') === 'PHARMACIST' || watch('role') === 'STORE_MANAGER' || watch('role') === 'CASHIER') ? 'Store address is required for this role' : false
                   })}
                 />
                 {errors.storeAddress && (
