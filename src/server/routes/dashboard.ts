@@ -4,7 +4,7 @@ import { Sale } from '../models/Sale';
 import { Prescription } from '../models/Prescription';
 import { User } from '../models/User';
 import { Inventory } from '../models/Inventory';
-import { auth } from '../middleware/auth';
+import { auth, requirePrivilege, requireCategoryPrivilege } from '../middleware/auth';
 import { logger } from '../config/logger';
 
 const router = express.Router();
@@ -365,5 +365,292 @@ function getTimeAgo(date: Date): string {
     day: 'numeric' 
   });
 }
+
+// ========================================
+// ROLE-SPECIFIC DASHBOARD ENDPOINTS
+// ========================================
+
+// Administrator Dashboard - Full system overview
+router.get('/admin', auth, requirePrivilege('SYSTEM_SETTINGS'), async (req, res) => {
+  try {
+    const today = new Date();
+    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const startOfThisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+    // System-wide statistics
+    const totalUsers = await User.countDocuments();
+    const totalRoles = await User.aggregate([
+      { $group: { _id: '$roleId', count: { $sum: 1 } } },
+      { $count: 'total' }
+    ]);
+    const totalStores = await User.aggregate([
+      { $group: { _id: '$storeId', count: { $sum: 1 } } },
+      { $count: 'total' }
+    ]);
+
+    // Financial overview
+    const monthlySales = await Sale.aggregate([
+      { $match: { createdAt: { $gte: startOfThisMonth } } },
+      { $group: { _id: null, total: { $sum: '$totalAmount' } } }
+    ]);
+    const monthlySalesAmount = monthlySales.length > 0 ? monthlySales[0].total : 0;
+
+    // System health
+    const lowStockItems = await Inventory.countDocuments({ 
+      $expr: { $lte: ['$quantity', '$reorderPoint'] } 
+    });
+    const expiringItems = await Inventory.countDocuments({
+      'batches.expiryDate': { 
+        $gte: new Date(), 
+        $lte: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) 
+      }
+    });
+
+    // Recent system activities
+    const recentSystemActivities = await User.find()
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .select('fullName roleId createdAt')
+      .populate('roleId', 'code');
+
+    res.json({
+      role: 'Administrator',
+      privileges: ['Full system access', 'User management', 'System settings', 'All reports'],
+      statistics: {
+        system: {
+          totalUsers,
+          totalRoles: totalRoles.length > 0 ? totalRoles[0].total : 0,
+          totalStores: totalStores.length > 0 ? totalStores[0].total : 0
+        },
+        financial: {
+          monthlySales: `₵${monthlySalesAmount.toLocaleString()}`,
+          monthlySalesRaw: monthlySalesAmount
+        },
+        alerts: {
+          lowStockItems,
+          expiringItems
+        }
+      },
+      recentActivities: recentSystemActivities.map(user => ({
+        action: 'User registered',
+        details: `${(user.roleId as any)?.code || 'Unknown'}: ${user.fullName}`,
+        time: getTimeAgo(user.createdAt)
+      })),
+      quickActions: [
+        { name: 'Manage Users', endpoint: '/api/users', method: 'GET' },
+        { name: 'Manage Roles', endpoint: '/api/roles', method: 'GET' },
+        { name: 'System Reports', endpoint: '/api/reports', method: 'GET' },
+        { name: 'Database Management', endpoint: '/api/system/health', method: 'GET' }
+      ]
+    });
+  } catch (error) {
+    logger.error('Error fetching admin dashboard:', error);
+    res.status(500).json({ message: 'Error fetching admin dashboard' });
+  }
+});
+
+// Pharmacist Dashboard - Focused on pharmaceutical operations
+router.get('/pharmacist', auth, requirePrivilege('MANAGE_PRESCRIPTIONS'), async (req, res) => {
+  try {
+    const today = new Date();
+    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const startOfThisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+    // Prescription statistics
+    const activePrescriptions = await Prescription.countDocuments({ status: 'active' });
+    const completedToday = await Prescription.countDocuments({
+      status: 'completed',
+      updatedAt: { $gte: startOfToday }
+    });
+    const pendingPrescriptions = await Prescription.countDocuments({ status: 'pending' });
+
+    // Inventory for prescriptions
+    const criticalDrugs = await Inventory.find({
+      $expr: { $lte: ['$quantity', '$reorderLevel'] }
+    }).populate('drug', 'name genericName strength form')
+    .limit(5);
+
+    // Recent prescription activities
+    const recentPrescriptions = await Prescription.find()
+      .sort({ updatedAt: -1 })
+      .limit(5)
+      .select('diagnosis status patientName updatedAt')
+      .populate('patient', 'fullName');
+
+    // Drug interactions and safety
+    const highRiskDrugs = await Drug.find({
+      $or: [
+        { 'interactions.severity': 'high' },
+        { 'sideEffects.severity': 'severe' }
+      ]
+    }).limit(3);
+
+    res.json({
+      role: 'Pharmacist',
+      privileges: ['Prescription management', 'Inventory access', 'Sales operations', 'Patient safety'],
+      statistics: {
+        prescriptions: {
+          active: activePrescriptions,
+          completedToday,
+          pending: pendingPrescriptions
+        },
+        inventory: {
+          criticalDrugs: criticalDrugs.length,
+          criticalDrugsList: criticalDrugs.map(item => ({
+            name: (item.drug as any).name,
+            generic: (item.drug as any).genericName,
+            strength: (item.drug as any).strength,
+            form: (item.drug as any).form,
+            currentStock: item.quantity,
+            reorderLevel: item.reorderPoint
+          }))
+        },
+        safety: {
+          highRiskDrugs: highRiskDrugs.length
+        }
+      },
+      recentActivities: recentPrescriptions.map(prescription => ({
+        action: `Prescription ${prescription.status}`,
+        details: `${prescription.diagnosis} - ${(prescription.patient as any)?.fullName || 'Unknown'}`,
+        time: getTimeAgo(prescription.updatedAt)
+      })),
+      quickActions: [
+        { name: 'Manage Prescriptions', endpoint: '/api/prescriptions', method: 'GET' },
+        { name: 'Check Inventory', endpoint: '/api/inventory', method: 'GET' },
+        { name: 'Process Sales', endpoint: '/api/sales', method: 'POST' },
+        { name: 'Patient Safety Check', endpoint: '/api/drugs/interactions', method: 'GET' }
+      ]
+    });
+  } catch (error) {
+    logger.error('Error fetching pharmacist dashboard:', error);
+    res.status(500).json({ message: 'Error fetching pharmacist dashboard' });
+  }
+});
+
+// Store Manager Dashboard - Business operations focus
+router.get('/store-manager', auth, requirePrivilege('MANAGE_INVENTORY'), async (req, res) => {
+  try {
+    const today = new Date();
+    const startOfThisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const startOfLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+
+    // Business metrics
+    const monthlySales = await Sale.aggregate([
+      { $match: { createdAt: { $gte: startOfThisMonth } } },
+      { $group: { _id: null, total: { $sum: '$totalAmount' }, count: { $sum: 1 } } }
+    ]);
+    const lastMonthSales = await Sale.aggregate([
+      { $match: { createdAt: { $gte: startOfLastMonth, $lt: startOfThisMonth } } },
+      { $group: { _id: null, total: { $sum: '$totalAmount' }, count: { $sum: 1 } } }
+    ]);
+
+    const currentMonthData = monthlySales.length > 0 ? monthlySales[0] : { total: 0, count: 0 };
+    const lastMonthData = lastMonthSales.length > 0 ? lastMonthSales[0] : { total: 0, count: 0 };
+
+    const salesGrowth = lastMonthData.total > 0 ? 
+      Math.round(((currentMonthData.total - lastMonthData.total) / lastMonthData.total) * 100) : 0;
+
+    // Staff performance
+    const staffCount = await User.countDocuments({ isActive: true });
+    const topPerformers = await Sale.aggregate([
+      { $match: { createdAt: { $gte: startOfThisMonth } } },
+      { $group: { _id: '$cashier', totalSales: { $sum: '$totalAmount' }, count: { $sum: 1 } } },
+      { $sort: { totalSales: -1 } },
+      { $limit: 3 }
+    ]);
+
+    // Inventory management
+    const totalInventoryValue = await Inventory.aggregate([
+      { $group: { _id: null, total: { $sum: { $multiply: ['$quantity', '$sellingPrice'] } } } }
+    ]);
+    const inventoryValue = totalInventoryValue.length > 0 ? totalInventoryValue[0].total : 0;
+
+    res.json({
+      role: 'Store Manager',
+      privileges: ['Business oversight', 'Staff management', 'Inventory control', 'Performance monitoring'],
+      statistics: {
+        business: {
+          monthlySales: `₵${currentMonthData.total.toLocaleString()}`,
+          monthlySalesRaw: currentMonthData.total,
+          salesCount: currentMonthData.count,
+          salesGrowth: `${salesGrowth >= 0 ? '+' : ''}${salesGrowth}%`
+        },
+        staff: {
+          totalStaff: staffCount,
+          topPerformers: topPerformers.length
+        },
+        inventory: {
+          totalValue: `₵${inventoryValue.toLocaleString()}`,
+          totalValueRaw: inventoryValue
+        }
+      },
+      quickActions: [
+        { name: 'View Sales Reports', endpoint: '/api/reports/sales', method: 'GET' },
+        { name: 'Manage Staff', endpoint: '/api/users', method: 'GET' },
+        { name: 'Inventory Overview', endpoint: '/api/inventory', method: 'GET' },
+        { name: 'Performance Analytics', endpoint: '/api/reports/performance', method: 'GET' }
+      ]
+    });
+  } catch (error) {
+    logger.error('Error fetching store manager dashboard:', error);
+    res.status(500).json({ message: 'Error fetching store manager dashboard' });
+  }
+});
+
+// Cashier Dashboard - Transaction focus
+router.get('/cashier', auth, requirePrivilege('CREATE_SALES'), async (req, res) => {
+  try {
+    const today = new Date();
+    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+    // Today's transactions
+    const todaySales = await Sale.aggregate([
+      { $match: { createdAt: { $gte: startOfToday } } },
+      { $group: { _id: null, total: { $sum: '$totalAmount' }, count: { $sum: 1 } } }
+    ]);
+    const todayData = todaySales.length > 0 ? todaySales[0] : { total: 0, count: 0 };
+
+    // Popular items
+    const popularItems = await Sale.aggregate([
+      { $match: { createdAt: { $gte: startOfToday } } },
+      { $group: { _id: '$drug', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 5 }
+    ]);
+
+    // Recent transactions
+    const recentTransactions = await Sale.find()
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .select('totalAmount paymentMethod createdAt')
+      .populate('drug', 'name');
+
+    res.json({
+      role: 'Cashier',
+      privileges: ['Process sales', 'View inventory', 'Customer service', 'Basic reporting'],
+      statistics: {
+        today: {
+          sales: `₵${todayData.total.toLocaleString()}`,
+          transactions: todayData.count
+        },
+        popularItems: popularItems.length
+      },
+      recentActivities: recentTransactions.map(sale => ({
+        action: 'Sale completed',
+        details: `${(sale.drug as any)?.name || 'Unknown'} - ₵${sale.totalAmount.toFixed(2)}`,
+        time: getTimeAgo(sale.createdAt)
+      })),
+      quickActions: [
+        { name: 'New Sale', endpoint: '/api/sales', method: 'POST' },
+        { name: 'Check Inventory', endpoint: '/api/inventory', method: 'GET' },
+        { name: 'View Prescriptions', endpoint: '/api/prescriptions', method: 'GET' },
+        { name: 'Daily Summary', endpoint: '/api/sales/daily-summary', method: 'GET' }
+      ]
+    });
+  } catch (error) {
+    logger.error('Error fetching cashier dashboard:', error);
+    res.status(500).json({ message: 'Error fetching cashier dashboard' });
+  }
+});
 
 export default router;
