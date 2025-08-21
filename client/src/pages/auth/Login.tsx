@@ -14,15 +14,21 @@ interface LoginFormData {
 export const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { login, isAuthenticated } = useAuth();
+  const { login, isAuthenticated, dashboardInfo } = useAuth();
   const navigate = useNavigate();
 
   // Redirect to dashboard when authenticated
   React.useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && dashboardInfo) {
+      if (dashboardInfo.route) {
+        navigate(dashboardInfo.route);
+      } else {
+        navigate('/dashboard');
+      }
+    } else if (isAuthenticated) {
       navigate('/dashboard');
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, dashboardInfo, navigate]);
 
   const {
     register,

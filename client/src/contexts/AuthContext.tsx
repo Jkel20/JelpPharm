@@ -180,8 +180,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     register
   };
 
-  // Debug logging
-  console.log('AuthContext: Current state - user:', user, 'isAuthenticated:', !!user, 'isLoading:', isLoading);
+  // Debug logging (commented out to reduce console noise)
+  // console.log('AuthContext: Current state - user:', user, 'isAuthenticated:', !!user, 'isLoading:', isLoading);
 
   return (
     <AuthContext.Provider value={value}>

@@ -12,10 +12,8 @@ import { Prescriptions } from './pages/Prescriptions';
 import { Reports } from './pages/Reports';
 import { Settings } from './pages/Settings';
 import MainLayout from './components/layout/MainLayout';
-import DashboardRouter from './components/DashboardRouter';
-
 // Protected Route component
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> => ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
 
   console.log('ProtectedRoute: isAuthenticated:', isAuthenticated, 'isLoading:', isLoading);
@@ -36,9 +34,6 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 const App: React.FC = () => {
   return (
     <div className="App">
-      {/* Dashboard Router for automatic role-based routing */}
-      <DashboardRouter />
-      
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
