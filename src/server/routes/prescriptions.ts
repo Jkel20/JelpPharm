@@ -1,6 +1,6 @@
 import express from 'express';
 import mongoose from 'mongoose';
-import { auth, requireRole } from '../middleware/auth';
+import { auth, requirePrivilege, requireCategoryPrivilege } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
 import { Prescription } from '../models/Prescription';
 import { Patient } from '../models/Patient';
@@ -73,7 +73,7 @@ router.get('/:id', auth, asyncHandler(async (req: express.Request, res: express.
 }));
 
 // Create new prescription
-router.post('/', auth, requireRole(['admin', 'manager', 'pharmacist', 'doctor']), asyncHandler(async (req: express.Request, res: express.Response) => {
+router.post('/', auth, requirePrivilege('MANAGE_PRESCRIPTIONS'), asyncHandler(async (req: express.Request, res: express.Response) => {
   const {
     patientId,
     doctorId,
@@ -147,7 +147,7 @@ router.post('/', auth, requireRole(['admin', 'manager', 'pharmacist', 'doctor'])
 }));
 
 // Update prescription
-router.put('/:id', auth, requireRole(['admin', 'manager', 'pharmacist', 'doctor']), asyncHandler(async (req: express.Request, res: express.Response) => {
+router.put('/:id', auth, requirePrivilege('MANAGE_PRESCRIPTIONS'), asyncHandler(async (req: express.Request, res: express.Response) => {
   const {
     drugs,
     diagnosis,
@@ -194,7 +194,7 @@ router.put('/:id', auth, requireRole(['admin', 'manager', 'pharmacist', 'doctor'
 }));
 
 // Delete prescription
-router.delete('/:id', auth, requireRole(['admin', 'manager']), asyncHandler(async (req: express.Request, res: express.Response) => {
+router.delete('/:id', auth, requirePrivilege('MANAGE_PRESCRIPTIONS'), asyncHandler(async (req: express.Request, res: express.Response) => {
   const prescription = await Prescription.findById(req.params.id);
   if (!prescription) {
     return res.status(404).json({
@@ -214,7 +214,7 @@ router.delete('/:id', auth, requireRole(['admin', 'manager']), asyncHandler(asyn
 }));
 
 // Export prescriptions to CSV
-router.get('/export/csv', auth, requireRole(['admin', 'manager']), asyncHandler(async (_req: express.Request, res: express.Response) => {
+router.get('/export/csv', auth, requirePrivilege('GENERATE_REPORTS'), asyncHandler(async (_req: express.Request, res: express.Response) => {
   const prescriptions = await Prescription.find()
     .populate('patient', 'name phone email dateOfBirth gender')
     .populate('doctor', 'name phone email specialization')

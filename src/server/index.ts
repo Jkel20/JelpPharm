@@ -20,6 +20,8 @@ import storeRoutes from './routes/stores';
 import tallyRoutes from './routes/tally';
 import dashboardRoutes from './routes/dashboard';
 import testPrivilegeRoutes from './routes/test-privileges';
+import roleRoutes from './routes/roles';
+import privilegeRoutes from './routes/privileges';
 import { errorHandler } from './middleware/errorHandler';
 import { notFound } from './middleware/notFound';
 
@@ -88,6 +90,8 @@ app.use('/api/stores', storeRoutes);
 app.use('/api/tally', tallyRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/test-privileges', testPrivilegeRoutes);
+app.use('/api/roles', roleRoutes);
+app.use('/api/privileges', privilegeRoutes);
 
 // Serve static files from React build
 app.use(express.static(path.join(__dirname, '../../client/build')));

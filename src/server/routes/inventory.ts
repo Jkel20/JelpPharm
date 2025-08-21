@@ -1,5 +1,5 @@
 import express from 'express';
-import { auth, requireRole } from '../middleware/auth';
+import { auth, requirePrivilege, requireCategoryPrivilege } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
 import { Drug } from '../models/Drug';
 import { Inventory } from '../models/Inventory';
@@ -66,7 +66,7 @@ router.get('/:id', auth, asyncHandler(async (req: express.Request, res: express.
 }));
 
 // Add new inventory item
-router.post('/', auth, requireRole(['admin', 'manager', 'pharmacist']), asyncHandler(async (req: express.Request, res: express.Response) => {
+router.post('/', auth, requirePrivilege('MANAGE_INVENTORY'), asyncHandler(async (req: express.Request, res: express.Response) => {
   const { drugId, storeId, quantity, batchNumber, expiryDate, purchasePrice, sellingPrice, supplier } = req.body;
   
   // Check if drug exists
@@ -129,7 +129,7 @@ router.post('/', auth, requireRole(['admin', 'manager', 'pharmacist']), asyncHan
 }));
 
 // Update inventory item
-router.put('/:id', auth, requireRole(['admin', 'manager', 'pharmacist']), asyncHandler(async (req: express.Request, res: express.Response) => {
+router.put('/:id', auth, requirePrivilege('MANAGE_INVENTORY'), asyncHandler(async (req: express.Request, res: express.Response) => {
   const { quantity, sellingPrice, status, notes } = req.body;
   
   const inventory = await Inventory.findById(req.params.id);
@@ -159,7 +159,7 @@ router.put('/:id', auth, requireRole(['admin', 'manager', 'pharmacist']), asyncH
 }));
 
 // Delete inventory item
-router.delete('/:id', auth, requireRole(['admin', 'manager']), asyncHandler(async (req: express.Request, res: express.Response) => {
+router.delete('/:id', auth, requirePrivilege('MANAGE_INVENTORY'), asyncHandler(async (req: express.Request, res: express.Response) => {
   const inventory = await Inventory.findById(req.params.id);
   if (!inventory) {
     return res.status(404).json({
@@ -179,7 +179,7 @@ router.delete('/:id', auth, requireRole(['admin', 'manager']), asyncHandler(asyn
 }));
 
 // Export inventory to CSV
-router.get('/export/csv', auth, requireRole(['admin', 'manager']), asyncHandler(async (_req: express.Request, res: express.Response) => {
+router.get('/export/csv', auth, requirePrivilege('GENERATE_REPORTS'), asyncHandler(async (_req: express.Request, res: express.Response) => {
   const inventory = await Inventory.find()
     .populate('drug', 'name genericName brandName category strength form')
     .populate('store', 'name location');

@@ -130,15 +130,50 @@ const defaultRoles: Array<{
 }> = [
   {
     name: 'Administrator',
-    description: 'Full system access with all privileges',
+    description: 'Full system access with all privileges. Can manage users, roles, privileges, system settings, and access all features. This role is designed for system administrators and IT managers who need complete control over the pharmacy management system.',
     code: 'ADMINISTRATOR',
     privileges: [], // Will be populated with all privileges
     isSystem: true
   },
   {
     name: 'Pharmacist',
-    description: 'Professional pharmacist with medication and inventory management privileges',
+    description: 'Professional pharmacist with comprehensive medication and inventory management privileges. Can manage prescriptions, dispense medications, manage inventory, create sales, and generate reports. This role is designed for licensed pharmacists who need full access to pharmaceutical operations.',
     code: 'PHARMACIST',
+    privileges: [], // Will be populated with specific privileges
+    isSystem: true
+  },
+  {
+    name: 'Store Manager',
+    description: 'Store-level manager with oversight of operations, staff, and business performance. Can manage inventory, sales, prescriptions, users within their store, and generate comprehensive reports. This role is designed for store managers who need to oversee all aspects of pharmacy operations.',
+    code: 'STORE_MANAGER',
+    privileges: [], // Will be populated with specific privileges
+    isSystem: true
+  },
+  {
+    name: 'Cashier',
+    description: 'Front-line staff member responsible for sales transactions and customer service. Can create sales, view inventory, process prescriptions, and generate basic reports. This role is designed for cashiers and sales assistants who handle customer transactions.',
+    code: 'CASHIER',
+    privileges: [], // Will be populated with specific privileges
+    isSystem: true
+  },
+  {
+    name: 'Inventory Specialist',
+    description: 'Staff member focused on inventory management and stock control. Can view and manage inventory, adjust stock levels, track batches, and generate inventory reports. This role is designed for staff who specialize in inventory management.',
+    code: 'INVENTORY_SPECIALIST',
+    privileges: [], // Will be populated with specific privileges
+    isSystem: true
+  },
+  {
+    name: 'Sales Representative',
+    description: 'Staff member focused on sales and customer relationships. Can create and manage sales, view inventory, process prescriptions, and generate sales reports. This role is designed for staff who focus on sales and customer service.',
+    code: 'SALES_REPRESENTATIVE',
+    privileges: [], // Will be populated with specific privileges
+    isSystem: true
+  },
+  {
+    name: 'Data Analyst',
+    description: 'Staff member focused on reporting and data analysis. Can view all data, generate comprehensive reports, analyze trends, and export data for external analysis. This role is designed for staff who need to analyze business performance and trends.',
+    code: 'DATA_ANALYST',
     privileges: [], // Will be populated with specific privileges
     isSystem: true
   }
@@ -166,46 +201,106 @@ export async function seedRolesAndPrivileges() {
     // Get all privilege IDs for administrator
     const allPrivilegeIds = createdPrivileges.map(p => p._id);
     
-    // Get specific privileges for pharmacist
-    const pharmacistPrivilegeCodes = [
-      'VIEW_USERS',
-      'VIEW_INVENTORY',
-      'MANAGE_INVENTORY',
-      'ADJUST_STOCK',
-      'VIEW_SALES',
-      'CREATE_SALES',
-      'MANAGE_SALES',
-      'VIEW_PRESCRIPTIONS',
-      'MANAGE_PRESCRIPTIONS',
-      'DISPENSE_MEDICATIONS',
-      'VIEW_REPORTS',
-      'GENERATE_REPORTS'
-    ];
-    
-    const pharmacistPrivilegeIds = createdPrivileges
-      .filter(p => pharmacistPrivilegeCodes.includes(p.code))
-      .map(p => p._id);
+    // Define privilege assignments for each role
+    const rolePrivilegeAssignments = {
+      'ADMINISTRATOR': allPrivilegeIds, // All privileges
+      
+      'PHARMACIST': createdPrivileges
+        .filter(p => [
+          'VIEW_USERS',
+          'VIEW_INVENTORY',
+          'MANAGE_INVENTORY',
+          'ADJUST_STOCK',
+          'VIEW_SALES',
+          'CREATE_SALES',
+          'MANAGE_SALES',
+          'VIEW_PRESCRIPTIONS',
+          'MANAGE_PRESCRIPTIONS',
+          'DISPENSE_MEDICATIONS',
+          'VIEW_REPORTS',
+          'GENERATE_REPORTS'
+        ].includes(p.code))
+        .map(p => p._id),
+      
+      'STORE_MANAGER': createdPrivileges
+        .filter(p => [
+          'VIEW_USERS',
+          'CREATE_USERS',
+          'EDIT_USERS',
+          'VIEW_INVENTORY',
+          'MANAGE_INVENTORY',
+          'ADJUST_STOCK',
+          'VIEW_SALES',
+          'CREATE_SALES',
+          'MANAGE_SALES',
+          'VIEW_PRESCRIPTIONS',
+          'MANAGE_PRESCRIPTIONS',
+          'DISPENSE_MEDICATIONS',
+          'VIEW_REPORTS',
+          'GENERATE_REPORTS'
+        ].includes(p.code))
+        .map(p => p._id),
+      
+      'CASHIER': createdPrivileges
+        .filter(p => [
+          'VIEW_INVENTORY',
+          'VIEW_SALES',
+          'CREATE_SALES',
+          'VIEW_PRESCRIPTIONS',
+          'VIEW_REPORTS'
+        ].includes(p.code))
+        .map(p => p._id),
+      
+      'INVENTORY_SPECIALIST': createdPrivileges
+        .filter(p => [
+          'VIEW_INVENTORY',
+          'MANAGE_INVENTORY',
+          'ADJUST_STOCK',
+          'VIEW_REPORTS',
+          'GENERATE_REPORTS'
+        ].includes(p.code))
+        .map(p => p._id),
+      
+      'SALES_REPRESENTATIVE': createdPrivileges
+        .filter(p => [
+          'VIEW_INVENTORY',
+          'VIEW_SALES',
+          'CREATE_SALES',
+          'MANAGE_SALES',
+          'VIEW_PRESCRIPTIONS',
+          'VIEW_REPORTS',
+          'GENERATE_REPORTS'
+        ].includes(p.code))
+        .map(p => p._id),
+      
+      'DATA_ANALYST': createdPrivileges
+        .filter(p => [
+          'VIEW_INVENTORY',
+          'VIEW_SALES',
+          'VIEW_PRESCRIPTIONS',
+          'VIEW_REPORTS',
+          'GENERATE_REPORTS'
+        ].includes(p.code))
+        .map(p => p._id)
+    };
     
     // Create or update roles
     for (const roleData of defaultRoles) {
       const existingRole = await Role.findOne({ code: roleData.code });
       
-      if (roleData.code === 'ADMINISTRATOR') {
-        roleData.privileges = allPrivilegeIds;
-      } else if (roleData.code === 'PHARMACIST') {
-        roleData.privileges = pharmacistPrivilegeIds;
-      }
+      // Assign privileges based on role code
+      roleData.privileges = rolePrivilegeAssignments[roleData.code as keyof typeof rolePrivilegeAssignments] || [];
       
       if (existingRole) {
         // Update existing role with new privileges
         existingRole.privileges = roleData.privileges;
         await existingRole.save();
-        logger.info(`Updated role: ${existingRole.code}`);
+        logger.info(`Updated role: ${existingRole.code} with ${roleData.privileges.length} privileges`);
       } else {
         // Create new role
         const role = new Role(roleData);
         await role.save();
-        logger.info(`Created role: ${role.code}`);
+        logger.info(`Created role: ${role.code} with ${roleData.privileges.length} privileges`);
       }
     }
     

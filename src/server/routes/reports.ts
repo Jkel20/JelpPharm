@@ -1,5 +1,5 @@
 import express from 'express';
-import { auth, requireRole } from '../middleware/auth';
+import { auth, requirePrivilege, requireCategoryPrivilege } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
 import { Sale } from '../models/Sale';
 import { Prescription } from '../models/Prescription';
@@ -11,7 +11,7 @@ import { logger } from '../config/logger';
 const router = express.Router();
 
 // Get sales analytics
-router.get('/sales', auth, requireRole(['admin', 'manager']), asyncHandler(async (req: express.Request, res: express.Response) => {
+router.get('/sales', auth, requirePrivilege('VIEW_REPORTS'), asyncHandler(async (req: express.Request, res: express.Response) => {
   const { startDate, endDate, storeId } = req.query;
   
   let dateFilter: any = {};
@@ -69,7 +69,7 @@ router.get('/sales', auth, requireRole(['admin', 'manager']), asyncHandler(async
 }));
 
 // Get inventory analytics
-router.get('/inventory', auth, requireRole(['admin', 'manager']), asyncHandler(async (req: express.Request, res: express.Response) => {
+router.get('/inventory', auth, requirePrivilege('VIEW_REPORTS'), asyncHandler(async (req: express.Request, res: express.Response) => {
   const { storeId } = req.query;
   
   let query: any = {};
@@ -120,7 +120,7 @@ router.get('/inventory', auth, requireRole(['admin', 'manager']), asyncHandler(a
 }));
 
 // Get prescription analytics
-router.get('/prescriptions', auth, requireRole(['admin', 'manager']), asyncHandler(async (req: express.Request, res: express.Response) => {
+router.get('/prescriptions', auth, requirePrivilege('VIEW_REPORTS'), asyncHandler(async (req: express.Request, res: express.Response) => {
   const { startDate, endDate, storeId } = req.query;
   
   let dateFilter: any = {};
@@ -185,7 +185,7 @@ router.get('/prescriptions', auth, requireRole(['admin', 'manager']), asyncHandl
 }));
 
 // Generate comprehensive report
-router.post('/generate', auth, requireRole(['admin', 'manager']), asyncHandler(async (req: express.Request, res: express.Response) => {
+router.post('/generate', auth, requirePrivilege('GENERATE_REPORTS'), asyncHandler(async (req: express.Request, res: express.Response) => {
   const { reportType, startDate, endDate, storeId, format = 'json' } = req.body;
   
   let dateFilter: any = {};
@@ -270,7 +270,7 @@ router.post('/generate', auth, requireRole(['admin', 'manager']), asyncHandler(a
 }));
 
 // Schedule report generation
-router.post('/schedule', auth, requireRole(['admin', 'manager']), asyncHandler(async (req: express.Request, res: express.Response) => {
+router.post('/schedule', auth, requirePrivilege('GENERATE_REPORTS'), asyncHandler(async (req: express.Request, res: express.Response) => {
   const { reportType, frequency, recipients, storeId } = req.body;
   
   // This would typically integrate with a job scheduler like cron or Bull

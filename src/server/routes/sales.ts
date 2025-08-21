@@ -1,6 +1,6 @@
 import express from 'express';
 import mongoose from 'mongoose';
-import { auth, requireRole } from '../middleware/auth';
+import { auth, requirePrivilege, requireCategoryPrivilege } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
 import { Sale } from '../models/Sale';
 import { Drug } from '../models/Drug';
@@ -81,7 +81,7 @@ router.get('/:id', auth, asyncHandler(async (req: express.Request, res: express.
 }));
 
 // Create new sale
-router.post('/', auth, requireRole(['admin', 'manager', 'pharmacist', 'cashier']), asyncHandler(async (req: express.Request, res: express.Response) => {
+router.post('/', auth, requirePrivilege('CREATE_SALES'), asyncHandler(async (req: express.Request, res: express.Response) => {
   const {
     drugId,
     storeId,
@@ -156,7 +156,7 @@ router.post('/', auth, requireRole(['admin', 'manager', 'pharmacist', 'cashier']
 }));
 
 // Update sale
-router.put('/:id', auth, requireRole(['admin', 'manager']), asyncHandler(async (req: express.Request, res: express.Response) => {
+router.put('/:id', auth, requirePrivilege('MANAGE_SALES'), asyncHandler(async (req: express.Request, res: express.Response) => {
   const { status, customerNotes, refundReason } = req.body;
   
   const sale = await Sale.findById(req.params.id);
@@ -191,7 +191,7 @@ router.put('/:id', auth, requireRole(['admin', 'manager']), asyncHandler(async (
 }));
 
 // Delete sale (soft delete)
-router.delete('/:id', auth, requireRole(['admin', 'manager']), asyncHandler(async (req: express.Request, res: express.Response) => {
+router.delete('/:id', auth, requirePrivilege('MANAGE_SALES'), asyncHandler(async (req: express.Request, res: express.Response) => {
   const sale = await Sale.findById(req.params.id);
   if (!sale) {
     return res.status(404).json({
@@ -322,7 +322,7 @@ router.get('/:id/receipt', auth, asyncHandler(async (req: express.Request, res: 
 }));
 
 // Export sales to CSV
-router.get('/export/csv', auth, requireRole(['admin', 'manager']), asyncHandler(async (req: express.Request, res: express.Response) => {
+router.get('/export/csv', auth, requirePrivilege('GENERATE_REPORTS'), asyncHandler(async (req: express.Request, res: express.Response) => {
   const { startDate, endDate, storeId } = req.query;
   
   let query: any = {};
