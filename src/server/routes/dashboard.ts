@@ -559,7 +559,11 @@ router.get('/pharmacist', auth, requirePrivilege('MANAGE_PRESCRIPTIONS'), async 
     });
   } catch (error) {
     logger.error('Error fetching pharmacist dashboard:', error);
-    res.status(500).json({ message: 'Error fetching pharmacist dashboard' });
+    res.status(500).json({ 
+      success: false,
+      message: 'Error fetching pharmacist dashboard',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 });
 
@@ -626,15 +630,33 @@ router.get('/store-manager', auth, requirePrivilege('MANAGE_INVENTORY'), async (
         }
       },
       quickActions: [
-        { name: 'View Sales Reports', endpoint: '/api/reports/sales', method: 'GET' },
-        { name: 'Manage Staff', endpoint: '/api/users', method: 'GET' },
-        { name: 'Inventory Overview', endpoint: '/api/inventory', method: 'GET' },
-        { name: 'Performance Analytics', endpoint: '/api/reports/performance', method: 'GET' }
+        { name: 'View Sales Reports', endpoint: '/api/reports/sales', method: 'GET', privilege: 'VIEW_REPORTS' },
+        { name: 'Manage Staff', endpoint: '/api/users', method: 'GET', privilege: 'VIEW_USERS' },
+        { name: 'Inventory Overview', endpoint: '/api/inventory', method: 'GET', privilege: 'VIEW_INVENTORY' },
+        { name: 'Performance Analytics', endpoint: '/api/reports/performance', method: 'GET', privilege: 'GENERATE_REPORTS' }
+      ],
+      dashboardFeatures: [
+        'Business performance monitoring',
+        'Staff performance tracking',
+        'Sales analytics and trends',
+        'Inventory value management',
+        'Financial reporting access',
+        'Store operations oversight'
+      ],
+      accessDenied: [
+        'System settings (requires SYSTEM_SETTINGS)',
+        'Role administration (requires SYSTEM_SETTINGS)',
+        'Database management (requires DATABASE_MANAGEMENT)',
+        'Advanced user management (requires EDIT_USERS)'
       ]
     });
   } catch (error) {
     logger.error('Error fetching store manager dashboard:', error);
-    res.status(500).json({ message: 'Error fetching store manager dashboard' });
+    res.status(500).json({ 
+      success: false,
+      message: 'Error fetching store manager dashboard',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 });
 
@@ -710,158 +732,14 @@ router.get('/cashier', auth, requirePrivilege('CREATE_SALES'), async (req, res) 
     });
   } catch (error) {
     logger.error('Error fetching cashier dashboard:', error);
-    res.status(500).json({ message: 'Error fetching cashier dashboard' });
-  }
-});
-
-// Inventory Specialist Dashboard - Focused on inventory management
-router.get('/inventory-specialist', auth, requirePrivilege('MANAGE_INVENTORY'), async (req, res) => {
-  try {
-    const today = new Date();
-    const startOfThisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-
-    // Inventory statistics
-    const totalItems = await Inventory.countDocuments();
-    const lowStockItems = await Inventory.countDocuments({ 
-      $expr: { $lte: ['$quantity', '$reorderPoint'] } 
-    });
-    const outOfStockItems = await Inventory.countDocuments({ quantity: 0 });
-    const expiringItems = await Inventory.countDocuments({
-      'batches.expiryDate': { 
-        $gte: new Date(), 
-        $lte: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) 
-      }
-    });
-
-    // Inventory value
-    const totalInventoryValue = await Inventory.aggregate([
-      { $group: { _id: null, total: { $sum: { $multiply: ['$quantity', '$sellingPrice'] } } } }
-    ]);
-    const inventoryValue = totalInventoryValue.length > 0 ? totalInventoryValue[0].total : 0;
-
-    // Recent inventory activities
-    const recentInventoryChanges = await Inventory.find()
-      .sort({ updatedAt: -1 })
-      .limit(5)
-      .select('quantity updatedAt')
-      .populate('drug', 'name genericName');
-
-    res.json({
-      success: true,
-      message: '📦 INVENTORY SPECIALIST DASHBOARD ACCESS GRANTED!',
-      role: 'Inventory Specialist',
-      requiredPrivilege: 'MANAGE_INVENTORY',
-      privileges: ['Inventory management', 'Stock control', 'Reorder management', 'Inventory reporting'],
-      accessLevel: 'INVENTORY_PROFESSIONAL',
-      restrictions: 'Limited to inventory operations - No sales or prescription management access',
-      statistics: {
-        inventory: {
-          totalItems,
-          lowStockItems,
-          outOfStockItems,
-          expiringItems
-        },
-        value: {
-          totalValue: `₵${inventoryValue.toLocaleString()}`,
-          totalValueRaw: inventoryValue
-        }
-      },
-      recentActivities: recentInventoryChanges.map(item => ({
-        action: 'Stock updated',
-        details: `${(item.drug as any)?.name || 'Unknown'} - Qty: ${item.quantity}`,
-        time: getTimeAgo(item.updatedAt)
-      })),
-      quickActions: [
-        { name: 'View Inventory', endpoint: '/api/inventory', method: 'GET', privilege: 'VIEW_INVENTORY' },
-        { name: 'Reorder Items', endpoint: '/api/inventory/reorder', method: 'POST', privilege: 'MANAGE_INVENTORY' },
-        { name: 'Stock Reports', endpoint: '/api/reports/inventory', method: 'GET', privilege: 'VIEW_REPORTS' },
-        { name: 'Batch Tracking', endpoint: '/api/inventory/batches', method: 'GET', privilege: 'VIEW_INVENTORY' }
-      ],
-      dashboardFeatures: [
-        'Complete inventory overview',
-        'Stock level monitoring',
-        'Reorder point management',
-        'Expiry date tracking',
-        'Inventory value calculation',
-        'Batch management'
-      ],
-      accessDenied: [
-        'User management (requires VIEW_USERS)',
-        'System settings (requires SYSTEM_SETTINGS)',
-        'Sales processing (requires CREATE_SALES)',
-        'Prescription management (requires MANAGE_PRESCRIPTIONS)',
-        'Database management (requires DATABASE_MANAGEMENT)'
-      ]
-    });
-  } catch (error) {
-    logger.error('Error fetching inventory specialist dashboard:', error);
     res.status(500).json({ 
       success: false,
-      message: 'Error fetching inventory specialist dashboard',
+      message: 'Error fetching cashier dashboard',
       error: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 });
 
-// Data Analyst Dashboard - Focused on reporting and analytics
-router.get('/data-analyst', auth, requirePrivilege('VIEW_REPORTS'), async (req, res) => {
-  try {
-    const today = new Date();
-    const startOfThisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 
-    // Report access statistics
-    const totalReports = await Sale.countDocuments(); // Placeholder for actual report count
-    const salesReports = await Sale.aggregate([
-      { $match: { createdAt: { $gte: startOfThisMonth } } },
-      { $group: { _id: null, total: { $sum: '$totalAmount' }, count: { $sum: 1 } } }
-    ]);
-    const salesData = salesReports.length > 0 ? salesReports[0] : { total: 0, count: 0 };
-
-    res.json({
-      success: true,
-      message: '📊 DATA ANALYST DASHBOARD ACCESS GRANTED!',
-      role: 'Data Analyst',
-      requiredPrivilege: 'VIEW_REPORTS',
-      privileges: ['Data analysis', 'Report generation', 'Trend analysis', 'Export capabilities'],
-      accessLevel: 'ANALYTICS_PROFESSIONAL',
-      restrictions: 'Limited to data analysis and reporting - No operational management access',
-      statistics: {
-        reports: {
-          totalReports,
-          monthlySales: `₵${salesData.total.toLocaleString()}`,
-          monthlyTransactions: salesData.count
-        }
-      },
-      quickActions: [
-        { name: 'Sales Reports', endpoint: '/api/reports/sales', method: 'GET', privilege: 'VIEW_REPORTS' },
-        { name: 'Inventory Reports', endpoint: '/api/reports/inventory', method: 'GET', privilege: 'VIEW_REPORTS' },
-        { name: 'Export Data', endpoint: '/api/reports/export', method: 'POST', privilege: 'GENERATE_REPORTS' },
-        { name: 'Trend Analysis', endpoint: '/api/reports/trends', method: 'GET', privilege: 'VIEW_REPORTS' }
-      ],
-      dashboardFeatures: [
-        'Comprehensive data access',
-        'Report generation tools',
-        'Trend analysis capabilities',
-        'Data export functionality',
-        'Performance metrics',
-        'Business intelligence'
-      ],
-      accessDenied: [
-        'User management (requires VIEW_USERS)',
-        'System settings (requires SYSTEM_SETTINGS)',
-        'Sales processing (requires CREATE_SALES)',
-        'Inventory management (requires MANAGE_INVENTORY)',
-        'Prescription management (requires MANAGE_PRESCRIPTIONS)'
-      ]
-    });
-  } catch (error) {
-    logger.error('Error fetching data analyst dashboard:', error);
-    res.status(500).json({ 
-      success: false,
-      message: 'Error fetching data analyst dashboard',
-      error: error instanceof Error ? error.message : 'Unknown error'
-    });
-  }
-});
 
 export default router;

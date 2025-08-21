@@ -111,8 +111,6 @@ export const Dashboard: React.FC = () => {
     if (path.includes('/pharmacist')) return 'pharmacist';
     if (path.includes('/store-manager')) return 'store-manager';
     if (path.includes('/cashier')) return 'cashier';
-    if (path.includes('/inventory-specialist')) return 'inventory-specialist';
-    if (path.includes('/data-analyst')) return 'data-analyst';
     return 'general';
   };
   
