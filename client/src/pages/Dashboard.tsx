@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   Package, 
   ShoppingCart, 
@@ -100,8 +100,23 @@ const QuickAction: React.FC<QuickActionProps> = ({ title, description, icon, hre
 };
 
 export const Dashboard: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, dashboardInfo } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Determine dashboard type based on current route
+  const getDashboardType = () => {
+    const path = location.pathname;
+    if (path.includes('/admin')) return 'admin';
+    if (path.includes('/pharmacist')) return 'pharmacist';
+    if (path.includes('/store-manager')) return 'store-manager';
+    if (path.includes('/cashier')) return 'cashier';
+    if (path.includes('/inventory-specialist')) return 'inventory-specialist';
+    if (path.includes('/data-analyst')) return 'data-analyst';
+    return 'general';
+  };
+  
+  const dashboardType = getDashboardType();
   
   const [stats, setStats] = useState([
     {
@@ -256,6 +271,70 @@ export const Dashboard: React.FC = () => {
     fetchDashboardData();
   }, []);
 
+  // Get role-specific dashboard content
+  const getRoleSpecificContent = () => {
+    switch (dashboardType) {
+      case 'admin':
+        return {
+          title: '🎯 Administrator Dashboard',
+          subtitle: 'Full system access with all privileges',
+          description: 'You have complete control over the pharmacy management system',
+          roleBadge: 'SYSTEM_ADMIN',
+          roleColor: 'bg-red-500'
+        };
+      case 'pharmacist':
+        return {
+          title: '💊 Pharmacist Dashboard',
+          subtitle: 'Pharmaceutical operations and patient care',
+          description: 'Manage prescriptions, inventory, and ensure patient safety',
+          roleBadge: 'PHARMACEUTICAL_PROFESSIONAL',
+          roleColor: 'bg-blue-500'
+        };
+      case 'store-manager':
+        return {
+          title: '🏪 Store Manager Dashboard',
+          subtitle: 'Business operations and performance oversight',
+          description: 'Monitor sales, manage staff, and optimize operations',
+          roleBadge: 'BUSINESS_MANAGER',
+          roleColor: 'bg-green-500'
+        };
+      case 'cashier':
+        return {
+          title: '💰 Cashier Dashboard',
+          subtitle: 'Sales transactions and customer service',
+          description: 'Process sales, check inventory, and assist customers',
+          roleBadge: 'FRONT_LINE_STAFF',
+          roleColor: 'bg-purple-500'
+        };
+      case 'inventory-specialist':
+        return {
+          title: '📦 Inventory Specialist Dashboard',
+          subtitle: 'Stock control and inventory management',
+          description: 'Monitor stock levels, manage reorders, and track batches',
+          roleBadge: 'INVENTORY_PROFESSIONAL',
+          roleColor: 'bg-orange-500'
+        };
+      case 'data-analyst':
+        return {
+          title: '📊 Data Analyst Dashboard',
+          subtitle: 'Reporting and business intelligence',
+          description: 'Analyze trends, generate reports, and provide insights',
+          roleBadge: 'ANALYTICS_PROFESSIONAL',
+          roleColor: 'bg-indigo-500'
+        };
+      default:
+        return {
+          title: 'Dashboard',
+          subtitle: 'System overview',
+          description: 'Here\'s what\'s happening today',
+          roleBadge: user?.role || 'USER',
+          roleColor: 'bg-gray-500'
+        };
+    }
+  };
+
+  const roleContent = getRoleSpecificContent();
+
   return (
     <div className="min-h-screen relative overflow-hidden">
       {/* Animated Background */}
@@ -269,27 +348,27 @@ export const Dashboard: React.FC = () => {
       <div className="relative bg-gradient-to-r from-white via-blue-50 to-purple-50 shadow-lg border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex items-center justify-between">
-                      <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-purple-800 bg-clip-text text-transparent">
-              {user?.role === 'ADMINISTRATOR' ? 'Administrator Dashboard' :
-               user?.role === 'PHARMACIST' ? 'Pharmacist Dashboard' :
-               user?.role === 'STORE_MANAGER' ? 'Store Manager Dashboard' :
-               user?.role === 'CASHIER' ? 'Cashier Dashboard' : 'Dashboard'}
-            </h1>
-            <p className="text-gray-600 mt-2 text-lg">
-              Welcome back, <span className="font-semibold text-blue-600">{user?.name}</span>! 
-              {user?.role === 'ADMINISTRATOR' ? ' You have full system access.' :
-               user?.role === 'PHARMACIST' ? ' You can manage prescriptions and inventory.' :
-               user?.role === 'STORE_MANAGER' ? ' You can manage business operations.' :
-               user?.role === 'CASHIER' ? ' You can process sales and transactions.' : 
-               ' Here\'s what\'s happening today.'}
-            </p>
-            {user?.role && (
-              <div className="mt-2 inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-                Role: {user.role}
+            <div>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-purple-800 bg-clip-text text-transparent">
+                {roleContent.title}
+              </h1>
+              <p className="text-gray-600 mt-2 text-lg">
+                {roleContent.subtitle}
+              </p>
+              <p className="text-gray-500 mt-1 text-base">
+                {roleContent.description}
+              </p>
+              <div className="mt-3 flex items-center gap-3">
+                <div className={`inline-block ${roleContent.roleColor} text-white px-3 py-1 rounded-full text-sm font-medium`}>
+                  {roleContent.roleBadge}
+                </div>
+                {user?.role && (
+                  <div className="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                    Role: {user.role}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            </div>
             <div className="text-right bg-white/80 backdrop-blur-sm rounded-lg p-4 shadow-sm">
               <p className="text-sm text-gray-500 font-medium">Today</p>
               <p className="text-lg font-semibold text-gray-900">

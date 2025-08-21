@@ -47,8 +47,8 @@ const validateSignup = [
     .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
     .withMessage('Password must be at least 8 characters and contain uppercase, lowercase, digit, and special character'),
   body('role')
-    .isIn(['ADMINISTRATOR', 'PHARMACIST'])
-    .withMessage('Invalid role selected. Only Administrator and Pharmacist roles are allowed.'),
+    .isIn(['ADMINISTRATOR', 'PHARMACIST', 'STORE_MANAGER', 'CASHIER', 'INVENTORY_SPECIALIST', 'SALES_REPRESENTATIVE', 'DATA_ANALYST'])
+    .withMessage('Invalid role selected. Please select a valid role from the available options.'),
   body('storeId')
     .optional()
     .isMongoId()
@@ -288,6 +288,53 @@ router.post('/login', authLimiter, validateLogin, async (req: express.Request, r
     // Log the login
     logger.info(`User logged in: ${user.email}`);
 
+    // Determine dashboard route based on user role
+    let dashboardRoute = '/dashboard';
+    let dashboardType = 'general';
+    let requiredPrivilege: string | null = null;
+    
+    switch (roleCode) {
+      case 'ADMINISTRATOR':
+        dashboardRoute = '/dashboard/admin';
+        dashboardType = 'admin';
+        requiredPrivilege = 'SYSTEM_SETTINGS';
+        break;
+      case 'PHARMACIST':
+        dashboardRoute = '/dashboard/pharmacist';
+        dashboardType = 'pharmacist';
+        requiredPrivilege = 'MANAGE_PRESCRIPTIONS';
+        break;
+      case 'STORE_MANAGER':
+        dashboardRoute = '/dashboard/store-manager';
+        dashboardType = 'store-manager';
+        requiredPrivilege = 'MANAGE_INVENTORY';
+        break;
+      case 'CASHIER':
+        dashboardRoute = '/dashboard/cashier';
+        dashboardType = 'cashier';
+        requiredPrivilege = 'CREATE_SALES';
+        break;
+      case 'INVENTORY_SPECIALIST':
+        dashboardRoute = '/dashboard/inventory-specialist';
+        dashboardType = 'inventory-specialist';
+        requiredPrivilege = 'MANAGE_INVENTORY';
+        break;
+      case 'SALES_REPRESENTATIVE':
+        dashboardRoute = '/dashboard/store-manager'; // Similar to store manager
+        dashboardType = 'sales-representative';
+        requiredPrivilege = 'MANAGE_INVENTORY';
+        break;
+      case 'DATA_ANALYST':
+        dashboardRoute = '/dashboard/data-analyst';
+        dashboardType = 'data-analyst';
+        requiredPrivilege = 'VIEW_REPORTS';
+        break;
+      default:
+        dashboardRoute = '/dashboard';
+        dashboardType = 'general';
+        requiredPrivilege = null;
+    }
+
     res.json({
       success: true,
       message: 'Login successful',
@@ -301,7 +348,14 @@ router.post('/login', authLimiter, validateLogin, async (req: express.Request, r
           storeId: user.storeId
         },
         token,
-        refreshToken
+        refreshToken,
+        dashboard: {
+          route: dashboardRoute,
+          type: dashboardType,
+          requiredPrivilege,
+          title: `${role ? role.name : roleCode} Dashboard`,
+          description: `Welcome to your personalized ${dashboardType} dashboard`
+        }
       }
     });
 

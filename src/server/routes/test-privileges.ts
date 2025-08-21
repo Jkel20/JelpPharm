@@ -29,8 +29,8 @@ router.get('/test-all-privileges', auth, requireAllPrivileges(['VIEW_USERS', 'VI
 
 // Test multiple privileges (ANY required)
 router.get('/test-any-privilege', auth, requireAnyPrivilege(['VIEW_USERS', 'VIEW_INVENTORY', 'VIEW_SALES']), (req, res) => {
-  res.json({
-    success: true,
+    res.json({
+      success: true,
     message: 'Access granted! You have at least ONE of the required privileges: VIEW_USERS OR VIEW_INVENTORY OR VIEW_SALES',
     user: req.user,
     requiredPrivileges: ['VIEW_USERS', 'VIEW_INVENTORY', 'VIEW_SALES']
@@ -39,8 +39,8 @@ router.get('/test-any-privilege', auth, requireAnyPrivilege(['VIEW_USERS', 'VIEW
 
 // Test category-based access
 router.get('/test-category-privilege', auth, requireCategoryPrivilege('user_management'), (req, res) => {
-  res.json({
-    success: true,
+    res.json({
+      success: true,
     message: 'Access granted! You have at least ONE user_management privilege.',
     user: req.user,
     requiredCategory: 'user_management'
@@ -244,8 +244,8 @@ router.get('/test-cashier-dashboard', auth, requirePrivilege('CREATE_SALES'), as
 // Test Access Denied (for demonstration)
 router.get('/test-access-denied', auth, requirePrivilege('SYSTEM_SETTINGS'), (req, res) => {
   // This will only work for users with SYSTEM_SETTINGS privilege
-  res.json({
-    success: true,
+    res.json({
+      success: true,
     message: 'Access granted! You have SYSTEM_SETTINGS privilege.',
     note: 'If you see this, you have admin-level access. Try accessing this endpoint with a user who lacks SYSTEM_SETTINGS privilege to see access denied.'
   });

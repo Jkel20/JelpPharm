@@ -12,6 +12,7 @@ import { Prescriptions } from './pages/Prescriptions';
 import { Reports } from './pages/Reports';
 import { Settings } from './pages/Settings';
 import MainLayout from './components/layout/MainLayout';
+import DashboardRouter from './components/DashboardRouter';
 
 // Protected Route component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -35,13 +36,79 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 const App: React.FC = () => {
   return (
     <div className="App">
+      {/* Dashboard Router for automatic role-based routing */}
+      <DashboardRouter />
+      
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        {/* General Dashboard */}
         <Route 
           path="/dashboard" 
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <Dashboard />
+              </MainLayout>
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* Role-Based Dashboards */}
+        <Route 
+          path="/dashboard/admin" 
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <Dashboard />
+              </MainLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/dashboard/pharmacist" 
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <Dashboard />
+              </MainLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/dashboard/store-manager" 
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <Dashboard />
+              </MainLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/dashboard/cashier" 
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <Dashboard />
+              </MainLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/dashboard/inventory-specialist" 
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <Dashboard />
+              </MainLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/dashboard/data-analyst" 
           element={
             <ProtectedRoute>
               <MainLayout>

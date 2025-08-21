@@ -367,17 +367,17 @@ function getTimeAgo(date: Date): string {
 }
 
 // ========================================
-// ROLE-SPECIFIC DASHBOARD ENDPOINTS
-// ========================================
+// ROLE-SPECIFIC DASHBOARD ENDPOINTS WITH RESTRICTIONS
+// =====================================================
 
-// Administrator Dashboard - Full system overview
+// Administrator Dashboard - Full system access (SYSTEM_SETTINGS privilege required)
 router.get('/admin', auth, requirePrivilege('SYSTEM_SETTINGS'), async (req, res) => {
   try {
     const today = new Date();
     const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     const startOfThisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 
-    // System-wide statistics
+    // System-wide statistics (only admins can see)
     const totalUsers = await User.countDocuments();
     const totalRoles = await User.aggregate([
       { $group: { _id: '$roleId', count: { $sum: 1 } } },
@@ -388,14 +388,14 @@ router.get('/admin', auth, requirePrivilege('SYSTEM_SETTINGS'), async (req, res)
       { $count: 'total' }
     ]);
 
-    // Financial overview
+    // Financial overview (admin privilege)
     const monthlySales = await Sale.aggregate([
       { $match: { createdAt: { $gte: startOfThisMonth } } },
       { $group: { _id: null, total: { $sum: '$totalAmount' } } }
     ]);
     const monthlySalesAmount = monthlySales.length > 0 ? monthlySales[0].total : 0;
 
-    // System health
+    // System health monitoring (admin privilege)
     const lowStockItems = await Inventory.countDocuments({ 
       $expr: { $lte: ['$quantity', '$reorderPoint'] } 
     });
@@ -406,7 +406,7 @@ router.get('/admin', auth, requirePrivilege('SYSTEM_SETTINGS'), async (req, res)
       }
     });
 
-    // Recent system activities
+    // Recent system activities (admin privilege)
     const recentSystemActivities = await User.find()
       .sort({ createdAt: -1 })
       .limit(5)
@@ -414,8 +414,13 @@ router.get('/admin', auth, requirePrivilege('SYSTEM_SETTINGS'), async (req, res)
       .populate('roleId', 'code');
 
     res.json({
+      success: true,
+      message: '🎯 ADMINISTRATOR DASHBOARD ACCESS GRANTED!',
       role: 'Administrator',
-      privileges: ['Full system access', 'User management', 'System settings', 'All reports'],
+      requiredPrivilege: 'SYSTEM_SETTINGS',
+      privileges: ['Full system access', 'User management', 'System settings', 'All reports', 'Database management'],
+      accessLevel: 'SYSTEM_ADMIN',
+      restrictions: 'None - Full access to all features',
       statistics: {
         system: {
           totalUsers,
@@ -437,26 +442,38 @@ router.get('/admin', auth, requirePrivilege('SYSTEM_SETTINGS'), async (req, res)
         time: getTimeAgo(user.createdAt)
       })),
       quickActions: [
-        { name: 'Manage Users', endpoint: '/api/users', method: 'GET' },
-        { name: 'Manage Roles', endpoint: '/api/roles', method: 'GET' },
-        { name: 'System Reports', endpoint: '/api/reports', method: 'GET' },
-        { name: 'Database Management', endpoint: '/api/system/health', method: 'GET' }
+        { name: 'Manage Users', endpoint: '/api/users', method: 'GET', privilege: 'VIEW_USERS' },
+        { name: 'Manage Roles', endpoint: '/api/roles', method: 'GET', privilege: 'SYSTEM_SETTINGS' },
+        { name: 'System Reports', endpoint: '/api/reports', method: 'GET', privilege: 'VIEW_REPORTS' },
+        { name: 'Database Management', endpoint: '/api/system/health', method: 'GET', privilege: 'DATABASE_MANAGEMENT' }
+      ],
+      dashboardFeatures: [
+        'System-wide user management',
+        'Role and privilege administration',
+        'Financial overview and analytics',
+        'System health monitoring',
+        'Database management access',
+        'Complete audit logs'
       ]
     });
   } catch (error) {
     logger.error('Error fetching admin dashboard:', error);
-    res.status(500).json({ message: 'Error fetching admin dashboard' });
+    res.status(500).json({ 
+      success: false,
+      message: 'Error fetching admin dashboard',
+      error: error instanceof Error ? error.message : 'Unknown error' 
+    });
   }
 });
 
-// Pharmacist Dashboard - Focused on pharmaceutical operations
+// Pharmacist Dashboard - Pharmaceutical operations (MANAGE_PRESCRIPTIONS privilege required)
 router.get('/pharmacist', auth, requirePrivilege('MANAGE_PRESCRIPTIONS'), async (req, res) => {
   try {
     const today = new Date();
     const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     const startOfThisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 
-    // Prescription statistics
+    // Prescription statistics (pharmacist privilege)
     const activePrescriptions = await Prescription.countDocuments({ status: 'active' });
     const completedToday = await Prescription.countDocuments({
       status: 'completed',
@@ -464,9 +481,9 @@ router.get('/pharmacist', auth, requirePrivilege('MANAGE_PRESCRIPTIONS'), async 
     });
     const pendingPrescriptions = await Prescription.countDocuments({ status: 'pending' });
 
-    // Inventory for prescriptions
+    // Inventory for prescriptions (pharmacist can see inventory)
     const criticalDrugs = await Inventory.find({
-      $expr: { $lte: ['$quantity', '$reorderLevel'] }
+      $expr: { $lte: ['$quantity', '$reorderPoint'] }
     }).populate('drug', 'name genericName strength form')
     .limit(5);
 
@@ -486,8 +503,13 @@ router.get('/pharmacist', auth, requirePrivilege('MANAGE_PRESCRIPTIONS'), async 
     }).limit(3);
 
     res.json({
+      success: true,
+      message: '💊 PHARMACIST DASHBOARD ACCESS GRANTED!',
       role: 'Pharmacist',
-      privileges: ['Prescription management', 'Inventory access', 'Sales operations', 'Patient safety'],
+      requiredPrivilege: 'MANAGE_PRESCRIPTIONS',
+      privileges: ['Prescription management', 'Inventory access', 'Sales operations', 'Patient safety', 'Drug interactions'],
+      accessLevel: 'PHARMACEUTICAL_PROFESSIONAL',
+      restrictions: 'Limited to pharmaceutical operations - No system administration access',
       statistics: {
         prescriptions: {
           active: activePrescriptions,
@@ -515,10 +537,24 @@ router.get('/pharmacist', auth, requirePrivilege('MANAGE_PRESCRIPTIONS'), async 
         time: getTimeAgo(prescription.updatedAt)
       })),
       quickActions: [
-        { name: 'Manage Prescriptions', endpoint: '/api/prescriptions', method: 'GET' },
-        { name: 'Check Inventory', endpoint: '/api/inventory', method: 'GET' },
-        { name: 'Process Sales', endpoint: '/api/sales', method: 'POST' },
-        { name: 'Patient Safety Check', endpoint: '/api/drugs/interactions', method: 'GET' }
+        { name: 'Manage Prescriptions', endpoint: '/api/prescriptions', method: 'GET', privilege: 'MANAGE_PRESCRIPTIONS' },
+        { name: 'Check Inventory', endpoint: '/api/inventory', method: 'GET', privilege: 'VIEW_INVENTORY' },
+        { name: 'Process Sales', endpoint: '/api/sales', method: 'POST', privilege: 'CREATE_SALES' },
+        { name: 'Patient Safety Check', endpoint: '/api/drugs/interactions', method: 'GET', privilege: 'MANAGE_PRESCRIPTIONS' }
+      ],
+      dashboardFeatures: [
+        'Prescription management and tracking',
+        'Patient safety monitoring',
+        'Drug interaction checking',
+        'Inventory status for prescriptions',
+        'Sales processing capabilities',
+        'Clinical decision support'
+      ],
+      accessDenied: [
+        'User management (requires VIEW_USERS)',
+        'System settings (requires SYSTEM_SETTINGS)',
+        'Role administration (requires SYSTEM_SETTINGS)',
+        'Database management (requires DATABASE_MANAGEMENT)'
       ]
     });
   } catch (error) {
@@ -566,8 +602,13 @@ router.get('/store-manager', auth, requirePrivilege('MANAGE_INVENTORY'), async (
     const inventoryValue = totalInventoryValue.length > 0 ? totalInventoryValue[0].total : 0;
 
     res.json({
+      success: true,
+      message: '🏪 STORE MANAGER DASHBOARD ACCESS GRANTED!',
       role: 'Store Manager',
-      privileges: ['Business oversight', 'Staff management', 'Inventory control', 'Performance monitoring'],
+      requiredPrivilege: 'MANAGE_INVENTORY',
+      privileges: ['Business oversight', 'Staff management', 'Inventory control', 'Performance monitoring', 'Sales analytics'],
+      accessLevel: 'BUSINESS_MANAGER',
+      restrictions: 'Limited to business operations - No system administration or user management access',
       statistics: {
         business: {
           monthlySales: `₵${currentMonthData.total.toLocaleString()}`,
@@ -626,8 +667,13 @@ router.get('/cashier', auth, requirePrivilege('CREATE_SALES'), async (req, res) 
       .populate('drug', 'name');
 
     res.json({
+      success: true,
+      message: '💰 CASHIER DASHBOARD ACCESS GRANTED!',
       role: 'Cashier',
-      privileges: ['Process sales', 'View inventory', 'Customer service', 'Basic reporting'],
+      requiredPrivilege: 'CREATE_SALES',
+      privileges: ['Process sales', 'View inventory', 'Customer service', 'Basic reporting', 'Transaction management'],
+      accessLevel: 'FRONT_LINE_STAFF',
+      restrictions: 'Limited to sales transactions - No management or administrative access',
       statistics: {
         today: {
           sales: `₵${todayData.total.toLocaleString()}`,
@@ -641,15 +687,180 @@ router.get('/cashier', auth, requirePrivilege('CREATE_SALES'), async (req, res) 
         time: getTimeAgo(sale.createdAt)
       })),
       quickActions: [
-        { name: 'New Sale', endpoint: '/api/sales', method: 'POST' },
-        { name: 'Check Inventory', endpoint: '/api/inventory', method: 'GET' },
-        { name: 'View Prescriptions', endpoint: '/api/prescriptions', method: 'GET' },
-        { name: 'Daily Summary', endpoint: '/api/sales/daily-summary', method: 'GET' }
+        { name: 'New Sale', endpoint: '/api/sales', method: 'POST', privilege: 'CREATE_SALES' },
+        { name: 'Check Inventory', endpoint: '/api/inventory', method: 'GET', privilege: 'VIEW_INVENTORY' },
+        { name: 'View Prescriptions', endpoint: '/api/prescriptions', method: 'GET', privilege: 'VIEW_PRESCRIPTIONS' },
+        { name: 'Daily Summary', endpoint: '/api/sales/daily-summary', method: 'GET', privilege: 'VIEW_REPORTS' }
+      ],
+      dashboardFeatures: [
+        'Sales transaction processing',
+        'Inventory checking for customers',
+        'Prescription verification',
+        'Daily sales summary',
+        'Customer service tools',
+        'Basic reporting access'
+      ],
+      accessDenied: [
+        'User management (requires VIEW_USERS)',
+        'System settings (requires SYSTEM_SETTINGS)',
+        'Role administration (requires SYSTEM_SETTINGS)',
+        'Advanced analytics (requires GENERATE_REPORTS)',
+        'Database management (requires DATABASE_MANAGEMENT)'
       ]
     });
   } catch (error) {
     logger.error('Error fetching cashier dashboard:', error);
     res.status(500).json({ message: 'Error fetching cashier dashboard' });
+  }
+});
+
+// Inventory Specialist Dashboard - Focused on inventory management
+router.get('/inventory-specialist', auth, requirePrivilege('MANAGE_INVENTORY'), async (req, res) => {
+  try {
+    const today = new Date();
+    const startOfThisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+    // Inventory statistics
+    const totalItems = await Inventory.countDocuments();
+    const lowStockItems = await Inventory.countDocuments({ 
+      $expr: { $lte: ['$quantity', '$reorderPoint'] } 
+    });
+    const outOfStockItems = await Inventory.countDocuments({ quantity: 0 });
+    const expiringItems = await Inventory.countDocuments({
+      'batches.expiryDate': { 
+        $gte: new Date(), 
+        $lte: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) 
+      }
+    });
+
+    // Inventory value
+    const totalInventoryValue = await Inventory.aggregate([
+      { $group: { _id: null, total: { $sum: { $multiply: ['$quantity', '$sellingPrice'] } } } }
+    ]);
+    const inventoryValue = totalInventoryValue.length > 0 ? totalInventoryValue[0].total : 0;
+
+    // Recent inventory activities
+    const recentInventoryChanges = await Inventory.find()
+      .sort({ updatedAt: -1 })
+      .limit(5)
+      .select('quantity updatedAt')
+      .populate('drug', 'name genericName');
+
+    res.json({
+      success: true,
+      message: '📦 INVENTORY SPECIALIST DASHBOARD ACCESS GRANTED!',
+      role: 'Inventory Specialist',
+      requiredPrivilege: 'MANAGE_INVENTORY',
+      privileges: ['Inventory management', 'Stock control', 'Reorder management', 'Inventory reporting'],
+      accessLevel: 'INVENTORY_PROFESSIONAL',
+      restrictions: 'Limited to inventory operations - No sales or prescription management access',
+      statistics: {
+        inventory: {
+          totalItems,
+          lowStockItems,
+          outOfStockItems,
+          expiringItems
+        },
+        value: {
+          totalValue: `₵${inventoryValue.toLocaleString()}`,
+          totalValueRaw: inventoryValue
+        }
+      },
+      recentActivities: recentInventoryChanges.map(item => ({
+        action: 'Stock updated',
+        details: `${(item.drug as any)?.name || 'Unknown'} - Qty: ${item.quantity}`,
+        time: getTimeAgo(item.updatedAt)
+      })),
+      quickActions: [
+        { name: 'View Inventory', endpoint: '/api/inventory', method: 'GET', privilege: 'VIEW_INVENTORY' },
+        { name: 'Reorder Items', endpoint: '/api/inventory/reorder', method: 'POST', privilege: 'MANAGE_INVENTORY' },
+        { name: 'Stock Reports', endpoint: '/api/reports/inventory', method: 'GET', privilege: 'VIEW_REPORTS' },
+        { name: 'Batch Tracking', endpoint: '/api/inventory/batches', method: 'GET', privilege: 'VIEW_INVENTORY' }
+      ],
+      dashboardFeatures: [
+        'Complete inventory overview',
+        'Stock level monitoring',
+        'Reorder point management',
+        'Expiry date tracking',
+        'Inventory value calculation',
+        'Batch management'
+      ],
+      accessDenied: [
+        'User management (requires VIEW_USERS)',
+        'System settings (requires SYSTEM_SETTINGS)',
+        'Sales processing (requires CREATE_SALES)',
+        'Prescription management (requires MANAGE_PRESCRIPTIONS)',
+        'Database management (requires DATABASE_MANAGEMENT)'
+      ]
+    });
+  } catch (error) {
+    logger.error('Error fetching inventory specialist dashboard:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error fetching inventory specialist dashboard',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+// Data Analyst Dashboard - Focused on reporting and analytics
+router.get('/data-analyst', auth, requirePrivilege('VIEW_REPORTS'), async (req, res) => {
+  try {
+    const today = new Date();
+    const startOfThisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+    // Report access statistics
+    const totalReports = await Sale.countDocuments(); // Placeholder for actual report count
+    const salesReports = await Sale.aggregate([
+      { $match: { createdAt: { $gte: startOfThisMonth } } },
+      { $group: { _id: null, total: { $sum: '$totalAmount' }, count: { $sum: 1 } } }
+    ]);
+    const salesData = salesReports.length > 0 ? salesReports[0] : { total: 0, count: 0 };
+
+    res.json({
+      success: true,
+      message: '📊 DATA ANALYST DASHBOARD ACCESS GRANTED!',
+      role: 'Data Analyst',
+      requiredPrivilege: 'VIEW_REPORTS',
+      privileges: ['Data analysis', 'Report generation', 'Trend analysis', 'Export capabilities'],
+      accessLevel: 'ANALYTICS_PROFESSIONAL',
+      restrictions: 'Limited to data analysis and reporting - No operational management access',
+      statistics: {
+        reports: {
+          totalReports,
+          monthlySales: `₵${salesData.total.toLocaleString()}`,
+          monthlyTransactions: salesData.count
+        }
+      },
+      quickActions: [
+        { name: 'Sales Reports', endpoint: '/api/reports/sales', method: 'GET', privilege: 'VIEW_REPORTS' },
+        { name: 'Inventory Reports', endpoint: '/api/reports/inventory', method: 'GET', privilege: 'VIEW_REPORTS' },
+        { name: 'Export Data', endpoint: '/api/reports/export', method: 'POST', privilege: 'GENERATE_REPORTS' },
+        { name: 'Trend Analysis', endpoint: '/api/reports/trends', method: 'GET', privilege: 'VIEW_REPORTS' }
+      ],
+      dashboardFeatures: [
+        'Comprehensive data access',
+        'Report generation tools',
+        'Trend analysis capabilities',
+        'Data export functionality',
+        'Performance metrics',
+        'Business intelligence'
+      ],
+      accessDenied: [
+        'User management (requires VIEW_USERS)',
+        'System settings (requires SYSTEM_SETTINGS)',
+        'Sales processing (requires CREATE_SALES)',
+        'Inventory management (requires MANAGE_INVENTORY)',
+        'Prescription management (requires MANAGE_PRESCRIPTIONS)'
+      ]
+    });
+  } catch (error) {
+    logger.error('Error fetching data analyst dashboard:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error fetching data analyst dashboard',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 });
 

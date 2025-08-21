@@ -9,8 +9,17 @@ interface User {
   storeId?: string;
 }
 
+interface DashboardInfo {
+  route: string;
+  type: string;
+  requiredPrivilege: string | null;
+  title: string;
+  description: string;
+}
+
 interface AuthContextType {
   user: User | null;
+  dashboardInfo: DashboardInfo | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (identifier: string, password: string) => Promise<void>;
@@ -34,6 +43,7 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [dashboardInfo, setDashboardInfo] = useState<DashboardInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -81,77 +91,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const userData = data.data.user;
         const token = data.data.token;
         
-        // Fetch detailed user info including role and privileges
-        try {
-          const userResponse = await fetch(buildApiUrl('/auth/my-dashboard'), {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json',
-            },
-          });
-          
-          if (userResponse.ok) {
-            const userDataDetailed = await userResponse.json();
-            if (userDataDetailed.success) {
-              const detailedUser = userDataDetailed.data.user;
-              const dashboard = userDataDetailed.data.dashboard;
-              
-              const user: User = {
-                id: detailedUser.id,
-                email: detailedUser.email,
-                name: detailedUser.fullName,
-                role: detailedUser.role,
-                storeId: detailedUser.storeId
-              };
-              
-              console.log('AuthContext: Setting detailed user:', user);
-              console.log('AuthContext: Dashboard info:', dashboard);
-              setUser(user);
-              setAuthToken(token);
-              console.log('AuthContext: Login completed successfully with role details');
-            } else {
-              // Fallback to basic user info
-              const user: User = {
-                id: userData.id,
-                email: userData.email,
-                name: userData.fullName,
-                role: userData.role,
-                storeId: userData.storeId
-              };
-              
-              setUser(user);
-              setAuthToken(token);
-              console.log('AuthContext: Login completed with basic user info');
-            }
-          } else {
-            // Fallback to basic user info
-            const user: User = {
-              id: userData.id,
-              email: userData.email,
-              name: userData.fullName,
-              role: userData.role,
-              storeId: userData.storeId
-            };
-            
-            setUser(user);
-            setAuthToken(token);
-            console.log('AuthContext: Login completed with basic user info');
-          }
-        } catch (userError) {
-          console.warn('AuthContext: Could not fetch detailed user info, using basic info:', userError);
-          // Fallback to basic user info
-          const user: User = {
-            id: userData.id,
-            email: userData.email,
-            name: userData.fullName,
-            role: userData.role,
-            storeId: userData.storeId
-          };
-          
-          setUser(user);
-          setAuthToken(token);
-          console.log('AuthContext: Login completed with basic user info');
-        }
+        // Use dashboard info from login response
+        const dashboard = data.data.dashboard;
+        
+        const user: User = {
+          id: userData.id,
+          email: userData.email,
+          name: userData.fullName,
+          role: userData.role,
+          storeId: userData.storeId
+        };
+        
+        console.log('AuthContext: Setting user:', user);
+        console.log('AuthContext: Dashboard info:', dashboard);
+        setUser(user);
+        setDashboardInfo(dashboard);
+        setAuthToken(token);
+        console.log('AuthContext: Login completed successfully with dashboard routing');
       } else {
         throw new Error('Invalid response from server');
       }
@@ -165,6 +121,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = () => {
     setUser(null);
+    setDashboardInfo(null);
     removeAuthToken();
   };
 
@@ -215,6 +172,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const value: AuthContextType = {
     user,
+    dashboardInfo,
     isAuthenticated: !!user,
     isLoading,
     login,
