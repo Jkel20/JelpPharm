@@ -1,183 +1,211 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from './contexts/AuthContext';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
+import { ProtectedRoute } from './components/auth/ProtectedRoute';
+import { PrivilegeProtectedRoute } from './components/auth/PrivilegeProtectedRoute';
+import { Navigation } from './components/layout/Navigation';
 import { Login } from './pages/auth/Login';
 import { Signup } from './pages/auth/Signup';
-import { ForgotPassword } from './pages/auth/ForgotPassword';
-import { ResetPassword } from './pages/auth/ResetPassword';
 import { Dashboard } from './pages/Dashboard';
-import { Inventory } from './pages/Inventory';
-import { Sales } from './pages/Sales';
-import { Prescriptions } from './pages/Prescriptions';
-import { Reports } from './pages/Reports';
-import { Settings } from './pages/Settings';
-import Unauthorized from './pages/Unauthorized';
-import MainLayout from './components/layout/MainLayout';
-import PrivilegeProtectedRoute from './components/auth/PrivilegeProtectedRoute';
+import { Unauthorized } from './pages/Unauthorized';
+import './styles/globals.css';
 
-// Protected Route component
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated, isLoading } = useAuth();
-
-  console.log('ProtectedRoute: isAuthenticated:', isAuthenticated, 'isLoading:', isLoading);
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
-
-  return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
-};
-
-const App: React.FC = () => {
+function App() {
   return (
-    <div className="App">
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/unauthorized" element={<Unauthorized />} />
-        
-        {/* General Dashboard */}
-        <Route 
-          path="/dashboard" 
-          element={
-            <ProtectedRoute>
-              <MainLayout>
-                <Dashboard />
-              </MainLayout>
-            </ProtectedRoute>
-          } 
-        />
-        
-        {/* Role-Based Dashboards with Privilege Protection */}
-        <Route 
-          path="/dashboard/admin" 
-          element={
-            <ProtectedRoute>
-              <PrivilegeProtectedRoute requiredPrivilege="SYSTEM_SETTINGS">
-                <MainLayout>
-                  <Dashboard />
-                </MainLayout>
-              </PrivilegeProtectedRoute>
-            </ProtectedRoute>
-          } 
-        />
-        
-        <Route 
-          path="/dashboard/pharmacist" 
-          element={
-            <ProtectedRoute>
-              <PrivilegeProtectedRoute requiredPrivilege="MANAGE_PRESCRIPTIONS">
-                <MainLayout>
-                  <Dashboard />
-                </MainLayout>
-              </PrivilegeProtectedRoute>
-            </ProtectedRoute>
-          } 
-        />
-        
-        <Route 
-          path="/dashboard/store-manager" 
-          element={
-            <ProtectedRoute>
-              <PrivilegeProtectedRoute requiredPrivilege="MANAGE_INVENTORY">
-                <MainLayout>
-                  <Dashboard />
-                </MainLayout>
-              </PrivilegeProtectedRoute>
-            </ProtectedRoute>
-          } 
-        />
-        
-        <Route 
-          path="/dashboard/cashier" 
-          element={
-            <ProtectedRoute>
-              <PrivilegeProtectedRoute requiredPrivilege="CREATE_SALES">
-                <MainLayout>
-                  <Dashboard />
-                </MainLayout>
-              </PrivilegeProtectedRoute>
-            </ProtectedRoute>
-          } 
-        />
-        
-        {/* Feature Routes with Privilege Protection */}
-        <Route 
-          path="/inventory" 
-          element={
-            <ProtectedRoute>
+    <AuthProvider>
+      <Router>
+        <div className="App min-h-screen bg-gray-50">
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/unauthorized" element={<Unauthorized />} />
+            
+            {/* Protected Routes with Navigation */}
+            <Route path="/" element={
+              <ProtectedRoute>
+                <Navigate to="/dashboard" replace />
+              </ProtectedRoute>
+            } />
+            
+            {/* Dashboard Routes */}
+            <Route path="/dashboard" element={
+              <ProtectedRoute>
+                <div className="flex">
+                  <Navigation />
+                  <main className="flex-1 lg:ml-64">
+                    <Dashboard />
+                  </main>
+                </div>
+              </ProtectedRoute>
+            } />
+            
+            {/* Role-based Dashboard Routes */}
+            <Route path="/admin" element={
+              <ProtectedRoute>
+                <div className="flex">
+                  <Navigation />
+                  <main className="flex-1 lg:ml-64">
+                    <Dashboard />
+                  </main>
+                </div>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/pharmacist" element={
+              <ProtectedRoute>
+                <div className="flex">
+                  <Navigation />
+                  <main className="flex-1 lg:ml-64">
+                    <Dashboard />
+                  </main>
+                </div>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/store-manager" element={
+              <ProtectedRoute>
+                <div className="flex">
+                  <Navigation />
+                  <main className="flex-1 lg:ml-64">
+                    <Dashboard />
+                  </main>
+                </div>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/cashier" element={
+              <ProtectedRoute>
+                <div className="flex">
+                  <Navigation />
+                  <main className="flex-1 lg:ml-64">
+                    <Dashboard />
+                  </main>
+                </div>
+              </ProtectedRoute>
+            } />
+            
+            {/* Feature Routes with Privilege Protection */}
+            <Route path="/inventory" element={
               <PrivilegeProtectedRoute requiredPrivilege="VIEW_INVENTORY">
-                <MainLayout>
-                  <Inventory />
-                </MainLayout>
+                <div className="flex">
+                  <Navigation />
+                  <main className="flex-1 lg:ml-64 p-8">
+                    <div className="max-w-7xl mx-auto">
+                      <h1 className="text-3xl font-bold text-gray-900 mb-6">Inventory Management</h1>
+                      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+                        <p className="text-gray-600">Inventory management features coming soon...</p>
+                      </div>
+                    </div>
+                  </main>
+                </div>
               </PrivilegeProtectedRoute>
-            </ProtectedRoute>
-          } 
-        />
-        
-        <Route 
-          path="/sales" 
-          element={
-            <ProtectedRoute>
+            } />
+            
+            <Route path="/sales" element={
               <PrivilegeProtectedRoute requiredPrivilege="VIEW_SALES">
-                <MainLayout>
-                  <Sales />
-                </MainLayout>
+                <div className="flex">
+                  <Navigation />
+                  <main className="flex-1 lg:ml-64 p-8">
+                    <div className="max-w-7xl mx-auto">
+                      <h1 className="text-3xl font-bold text-gray-900 mb-6">Sales Management</h1>
+                      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+                        <p className="text-gray-600">Sales management features coming soon...</p>
+                      </div>
+                    </div>
+                  </main>
+                </div>
               </PrivilegeProtectedRoute>
-            </ProtectedRoute>
-          } 
-        />
-        
-        <Route 
-          path="/prescriptions" 
-          element={
-            <ProtectedRoute>
+            } />
+            
+            <Route path="/prescriptions" element={
               <PrivilegeProtectedRoute requiredPrivilege="VIEW_PRESCRIPTIONS">
-                <MainLayout>
-                  <Prescriptions />
-                </MainLayout>
+                <div className="flex">
+                  <Navigation />
+                  <main className="flex-1 lg:ml-64 p-8">
+                    <div className="max-w-7xl mx-auto">
+                      <h1 className="text-3xl font-bold text-gray-900 mb-6">Prescription Management</h1>
+                      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+                        <p className="text-gray-600">Prescription management features coming soon...</p>
+                      </div>
+                    </div>
+                  </main>
+                </div>
               </PrivilegeProtectedRoute>
-            </ProtectedRoute>
-          } 
-        />
-        
-        <Route 
-          path="/reports" 
-          element={
-            <ProtectedRoute>
+            } />
+            
+            <Route path="/reports" element={
               <PrivilegeProtectedRoute requiredPrivilege="VIEW_REPORTS">
-                <MainLayout>
-                  <Reports />
-                </MainLayout>
+                <div className="flex">
+                  <Navigation />
+                  <main className="flex-1 lg:ml-64 p-8">
+                    <div className="max-w-7xl mx-auto">
+                      <h1 className="text-3xl font-bold text-gray-900 mb-6">Reports & Analytics</h1>
+                      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+                        <p className="text-gray-600">Reports and analytics features coming soon...</p>
+                      </div>
+                    </div>
+                  </main>
+                </div>
               </PrivilegeProtectedRoute>
-            </ProtectedRoute>
-          } 
-        />
-        
-        <Route 
-          path="/settings" 
-          element={
-            <ProtectedRoute>
+            } />
+            
+            <Route path="/users" element={
+              <PrivilegeProtectedRoute requiredPrivilege="VIEW_USERS">
+                <div className="flex">
+                  <Navigation />
+                  <main className="flex-1 lg:ml-64 p-8">
+                    <div className="max-w-7xl mx-auto">
+                      <h1 className="text-3xl font-bold text-gray-900 mb-6">User Management</h1>
+                      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+                        <p className="text-gray-600">User management features coming soon...</p>
+                      </div>
+                    </div>
+                  </main>
+                </div>
+              </PrivilegeProtectedRoute>
+            } />
+            
+            <Route path="/stores" element={
               <PrivilegeProtectedRoute requiredPrivilege="SYSTEM_SETTINGS">
-                <MainLayout>
-                  <Settings />
-                </MainLayout>
+                <div className="flex">
+                  <Navigation />
+                  <main className="flex-1 lg:ml-64 p-8">
+                    <div className="max-w-7xl mx-auto">
+                      <h1 className="text-3xl font-bold text-gray-900 mb-6">Store Management</h1>
+                      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+                        <p className="text-gray-600">Store management features coming soon...</p>
+                      </div>
+                    </div>
+                  </main>
+                </div>
               </PrivilegeProtectedRoute>
-            </ProtectedRoute>
-          } 
-        />
-        
-        {/* Catch-all route */}
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
-      </Routes>
-    </div>
+            } />
+            
+            {/* Settings Route */}
+            <Route path="/settings" element={
+              <ProtectedRoute>
+                <div className="flex">
+                  <Navigation />
+                  <main className="flex-1 lg:ml-64 p-8">
+                    <div className="max-w-7xl mx-auto">
+                      <h1 className="text-3xl font-bold text-gray-900 mb-6">Settings</h1>
+                      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+                        <p className="text-gray-600">Settings features coming soon...</p>
+                      </div>
+                    </div>
+                  </main>
+                </div>
+              </ProtectedRoute>
+            } />
+            
+            {/* Catch-all route */}
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          </Routes>
+        </div>
+      </Router>
+    </AuthProvider>
   );
-};
+}
 
 export default App;

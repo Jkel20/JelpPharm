@@ -8,7 +8,7 @@ interface PrivilegeProtectedRouteProps {
   fallbackPath?: string;
 }
 
-const PrivilegeProtectedRoute: React.FC<PrivilegeProtectedRouteProps> = ({ 
+export const PrivilegeProtectedRoute: React.FC<PrivilegeProtectedRouteProps> = ({
   children, 
   requiredPrivilege, 
   fallbackPath = '/unauthorized' 
@@ -37,5 +37,3 @@ const PrivilegeProtectedRoute: React.FC<PrivilegeProtectedRouteProps> = ({
 
   return <>{children}</>;
 };
-
-export default PrivilegeProtectedRoute;

@@ -1,10 +1,19 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { Eye, EyeOff, Lock, Mail, User, Building2 } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
-import Button from '../../components/ui/Button';
+import { useNavigate } from 'react-router-dom';
+import { 
+  Mail, 
+  Lock, 
+  Eye, 
+  EyeOff, 
+  Building2, 
+  AlertCircle,
+  ArrowRight,
+  Shield
+} from 'lucide-react';
 import { Card } from '../../components/ui/Card';
+import Button from '../../components/ui/Button';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface LoginFormData {
   identifier: string;
@@ -57,15 +66,10 @@ export const Login: React.FC = () => {
           type: 'manual',
           message: 'Account is locked due to multiple failed login attempts. Please try again later or contact support.',
         });
-      } else if (error.response?.status === 401) {
-        setError('root', {
-          type: 'manual',
-          message: 'Invalid credentials. Please check your email/username and password.',
-        });
       } else {
         setError('root', {
           type: 'manual',
-          message: 'Login failed. Please try again.',
+          message: 'Login failed. Please check your credentials and try again.',
         });
       }
     } finally {
@@ -74,29 +78,31 @@ export const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pharmacy-50 via-white to-pharmacy-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        {/* Logo and Title */}
+        {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-pharmacy-600 text-white rounded-full mb-4">
-            <Building2 className="w-8 h-8" />
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-full mb-6 shadow-lg">
+            <Building2 className="w-10 h-10" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">JelpPharm PMS</h1>
-          <p className="text-gray-600">Pharmacy Management System</p>
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+            Welcome Back
+          </h1>
+          <p className="text-lg text-gray-600">Sign in to your JelpPharm PMS account</p>
         </div>
 
         {/* Login Form */}
-        <Card className="p-8">
+        <Card className="p-8 shadow-2xl border-0 bg-white/80 backdrop-blur-sm">
           <div className="text-center mb-6">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-2">Welcome Back</h2>
-            <p className="text-gray-600">Sign in to your account to continue</p>
+            <h2 className="text-2xl font-semibold text-gray-900 mb-2">Sign In</h2>
+            <p className="text-gray-600">Enter your credentials to continue</p>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Email/Username Field */}
             <div>
-              <label htmlFor="identifier" className="block text-sm font-medium text-gray-700 mb-2">
-                Email or Username
+              <label htmlFor="identifier" className="form-label">
+                Email or Username <span className="form-required">*</span>
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -106,21 +112,26 @@ export const Login: React.FC = () => {
                   id="identifier"
                   type="text"
                   placeholder="Enter your email or username"
-                  className={`pl-10 flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 ${errors.identifier ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''}`}
+                  className={`pl-10 pr-4 h-12 w-full rounded-lg border bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-all duration-200 ${
+                    errors.identifier ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 hover:border-gray-400'
+                  }`}
                   {...register('identifier', {
-                    required: 'Email or username is required',
+                    required: 'Email or username is required'
                   })}
                 />
               </div>
               {errors.identifier && (
-                <p className="mt-1 text-sm text-red-600">{errors.identifier.message}</p>
+                <p className="form-error">
+                  <AlertCircle className="w-4 h-4 mr-1" />
+                  {errors.identifier.message}
+                </p>
               )}
             </div>
 
             {/* Password Field */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                Password
+              <label htmlFor="password" className="form-label">
+                Password <span className="form-required">*</span>
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -130,40 +141,39 @@ export const Login: React.FC = () => {
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   placeholder="Enter your password"
-                  className={`pl-10 pr-12 flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 ${errors.password ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''}`}
+                  className={`pl-10 pr-12 h-12 w-full rounded-lg border bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-all duration-200 ${
+                    errors.password ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 hover:border-gray-400'
+                  }`}
                   {...register('password', {
-                    required: 'Password is required',
+                    required: 'Password is required'
                   })}
                 />
                 <button
                   type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
                   onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
                 >
                   {showPassword ? (
-                    <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                    <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600 transition-colors" />
                   ) : (
-                    <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                    <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600 transition-colors" />
                   )}
                 </button>
               </div>
               {errors.password && (
-                <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
+                <p className="form-error">
+                  <AlertCircle className="w-4 h-4 mr-1" />
+                  {errors.password.message}
+                </p>
               )}
             </div>
 
-            {/* Root Error */}
+            {/* Error Display */}
             {errors.root && (
-              <div className="rounded-md bg-red-50 p-4">
-                <div className="flex">
-                  <div className="flex-shrink-0">
-                    <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <div className="ml-3">
-                    <p className="text-sm text-red-800">{errors.root.message}</p>
-                  </div>
+              <div className="alert alert-error">
+                <div className="flex items-center">
+                  <AlertCircle className="w-5 h-5 text-red-600 mr-2" />
+                  <p className="text-sm text-red-600">{errors.root.message}</p>
                 </div>
               </div>
             )}
@@ -171,52 +181,77 @@ export const Login: React.FC = () => {
             {/* Submit Button */}
             <Button
               type="submit"
-              className="w-full"
               disabled={isLoading}
-              isLoading={isLoading}
+              className="w-full h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-200"
             >
-              {isLoading ? 'Signing In...' : 'Sign In'}
+              {isLoading ? (
+                <div className="flex items-center justify-center">
+                  <div className="loading-spinner w-5 h-5 mr-2"></div>
+                  Signing In...
+                </div>
+              ) : (
+                <div className="flex items-center justify-center">
+                  Sign In
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </div>
+              )}
             </Button>
           </form>
 
-          {/* Forgot Password Link */}
-          <div className="mt-6 text-center">
-            <Link
-              to="/forgot-password"
-              className="text-sm text-pharmacy-600 hover:text-pharmacy-500 font-medium"
-            >
-              Forgot your password?
-            </Link>
-          </div>
-
-          {/* Divider */}
-          <div className="mt-6">
+          {/* Additional Options */}
+          <div className="mt-6 space-y-4">
+            <div className="text-center">
+              <a 
+                href="/forgot-password" 
+                className="text-blue-600 hover:text-blue-700 font-medium transition-colors text-sm"
+              >
+                Forgot your password?
+              </a>
+            </div>
+            
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-gray-300" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Don't have an account?</span>
+                <span className="px-2 bg-white text-gray-500">New to JelpPharm?</span>
               </div>
             </div>
-          </div>
 
-          {/* Sign Up Link */}
-          <div className="mt-6 text-center">
-            <Link
-              to="/signup"
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-pharmacy-700 bg-pharmacy-100 hover:bg-pharmacy-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pharmacy-500 transition-colors duration-200"
+            <Button
+              onClick={() => navigate('/signup')}
+              variant="outline"
+              className="w-full h-12 border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white font-semibold transition-all duration-200"
             >
-              <User className="w-4 h-4 mr-2" />
-              Create Account
-            </Link>
+              Create New Account
+            </Button>
           </div>
         </Card>
 
-        {/* Footer */}
-        <div className="mt-8 text-center text-sm text-gray-500">
-          <p>&copy; {new Date().getFullYear()} JelpPharm. All rights reserved.</p>
-          <p className="mt-1">Pharmacy Management System for Ghana</p>
+        {/* Security Notice */}
+        <div className="mt-6 text-center">
+          <div className="inline-flex items-center text-xs text-gray-500">
+            <Shield className="w-4 h-4 mr-1" />
+            Your data is protected with enterprise-grade security
+          </div>
+        </div>
+
+        {/* Footer Links */}
+        <div className="mt-8 text-center space-y-2">
+          <div className="flex justify-center space-x-6 text-sm">
+            <button className="text-gray-500 hover:text-gray-700 font-medium transition-colors">
+              Privacy Policy
+            </button>
+            <button className="text-gray-500 hover:text-gray-700 font-medium transition-colors">
+              Terms of Service
+            </button>
+            <button className="text-gray-500 hover:text-gray-700 font-medium transition-colors">
+              Support
+            </button>
+          </div>
+          <p className="text-xs text-gray-400">
+            © 2024 JelpPharm PMS. All rights reserved.
+          </p>
         </div>
       </div>
     </div>

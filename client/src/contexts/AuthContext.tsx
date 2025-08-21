@@ -50,17 +50,47 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Check if user is logged in on app start
     const token = getAuthToken();
     if (token) {
-      // TODO: Validate token with backend
-      // For now, just set a mock user
-      setUser({
-        id: '1',
-        email: 'admin@jelppharm.com',
-        name: 'Kwame Addo',
-        role: 'Administrator'
-      });
+      // Validate token locally and set user if valid
+      validateTokenLocally(token);
+    } else {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }, []);
+
+  // Function to validate existing token locally
+  const validateTokenLocally = async (token: string) => {
+    try {
+      // Try to decode the token to check if it's expired
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const currentTime = Date.now() / 1000;
+      
+      if (payload.exp && payload.exp < currentTime) {
+        // Token is expired, remove it
+        console.log('Token expired, removing...');
+        removeAuthToken();
+        setIsLoading(false);
+        return;
+      }
+
+      // Token is valid, set user from token payload
+      const user: User = {
+        id: payload.userId,
+        email: payload.email || 'user@example.com',
+        name: payload.name || 'User',
+        role: payload.role || 'User',
+        storeId: payload.storeId
+      };
+      
+      setUser(user);
+      console.log('User restored from token:', user);
+    } catch (error) {
+      console.error('Token validation error:', error);
+      // On error, remove the token to be safe
+      removeAuthToken();
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const login = async (identifier: string, password: string) => {
     try {
@@ -160,51 +190,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     const userPrivileges = rolePrivileges[user.role] || [];
     return userPrivileges.includes(privilegeCode);
-  };
-
-  const register = async (userData: any) => {
-    try {
-      setIsLoading(true);
-      
-      // Make API call to server
-      const response = await fetch(buildApiUrl('/auth/signup'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          fullName: userData.fullName,
-          username: userData.email.split('@')[0], // Generate username from email
-          email: userData.email,
-          phone: userData.phone,
-          password: userData.password,
-          role: userData.role,
-          storeName: userData.storeName,
-          storeAddress: userData.storeAddress
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Registration failed');
-      }
-
-      if (data.success) {
-        console.log('Registration successful:', data);
-        // Don't automatically log in the user after registration
-        // They need to verify their email first
-        // The registration success will be handled in the Signup component
-      } else {
-        throw new Error('Registration failed');
-      }
-      
-    } catch (error) {
-      console.error('Registration error:', error);
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   const value: AuthContextType = {

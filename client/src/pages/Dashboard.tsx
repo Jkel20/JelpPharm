@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   Package, 
@@ -7,104 +6,45 @@ import {
   FileText, 
   Users, 
   TrendingUp, 
-  AlertTriangle,
-  DollarSign,
-  Activity
+  AlertTriangle, 
+  CheckCircle,
+  BarChart3,
+  ArrowRight,
+  Calendar,
+  MapPin
 } from 'lucide-react';
-import { dashboardAPI } from '../services/api';
-import { mockDashboardData } from '../services/mockData';
+import { useAuth } from '../contexts/AuthContext';
+import { QuickAction } from '../components/ui/QuickAction';
 
-// TypeScript interfaces for dashboard data
+interface Stat {
+  value: string;
+  change: string;
+}
+
 interface Alert {
-  type: string;
   title: string;
   message: string;
   severity: 'danger' | 'warning' | 'info';
-  drugs?: Array<{
-    name: string;
-    quantity: number;
-    reorderLevel?: number;
-    expiryDate?: Date;
-  }>;
+  drugs?: Array<{ name: string; quantity: number }>;
 }
 
 interface Activity {
-  id: string;
   action: string;
   item: string;
   time: string;
   type: 'success' | 'warning' | 'info';
 }
 
-interface StatCardProps {
-  title: string;
-  value: string | number;
-  change?: string;
-  icon: React.ReactNode;
-  color: string;
-}
-
-const StatCard: React.FC<StatCardProps> = ({ title, value, change, icon, color }) => (
-  <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-gray-200 hover:border-gray-300 transform hover:-translate-y-1">
-    <div className="flex items-center">
-      <div className={`p-4 rounded-xl ${color} shadow-lg`}>
-        {icon}
-      </div>
-      <div className="ml-4 flex-1">
-        <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>
-        <p className="text-3xl font-bold text-gray-900 mb-2">{value}</p>
-        {change && (
-          <p className="text-sm text-green-600 flex items-center font-medium">
-            <TrendingUp className="w-4 h-4 mr-1" />
-            {change}
-          </p>
-        )}
-      </div>
-    </div>
-  </div>
-);
-
-interface QuickActionProps {
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-  href: string;
-}
-
-const QuickAction: React.FC<QuickActionProps> = ({ title, description, icon, href }) => {
-  const navigate = useNavigate();
-  
-  return (
-    <div 
-      className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 cursor-pointer border border-gray-200 hover:border-blue-300 transform hover:-translate-y-1 group"
-      onClick={() => navigate(href)}
-    >
-      <div className="flex items-center">
-        <div className="p-4 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg group-hover:scale-110 transition-transform duration-300">
-          {icon}
-        </div>
-        <div className="ml-4 flex-1">
-          <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors duration-300">{title}</h3>
-          <p className="text-sm text-gray-600 mt-1">{description}</p>
-        </div>
-        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-            <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 export const Dashboard: React.FC = () => {
-  const { user, logout, dashboardInfo, hasPrivilege } = useAuth();
+  const { user, hasPrivilege } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  
-  // Determine dashboard type based on current route
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<Stat[]>([]);
+  const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [recentActivity, setRecentActivity] = useState<Activity[]>([]);
+
+  // Get dashboard type from URL
   const getDashboardType = () => {
     const path = location.pathname;
     if (path.includes('/admin')) return 'admin';
@@ -113,161 +53,8 @@ export const Dashboard: React.FC = () => {
     if (path.includes('/cashier')) return 'cashier';
     return 'general';
   };
-  
+
   const dashboardType = getDashboardType();
-  
-  const [stats, setStats] = useState([
-    {
-      title: 'Total Drugs',
-      value: '0',
-      change: 'Loading...',
-      icon: <Package className="w-6 h-6 text-white" />,
-      color: 'bg-blue-500'
-    },
-    {
-      title: 'Today\'s Sales',
-      value: '₵0',
-      change: 'Loading...',
-      icon: <ShoppingCart className="w-6 h-6 text-white" />,
-      color: 'bg-green-500'
-    },
-    {
-      title: 'Active Prescriptions',
-      value: '0',
-      change: 'Loading...',
-      icon: <FileText className="w-6 h-6 text-white" />,
-      color: 'bg-purple-500'
-    },
-    {
-      title: 'Registered Users',
-      value: '0',
-      change: 'Loading...',
-      icon: <Users className="w-6 h-6 text-white" />,
-      color: 'bg-orange-500'
-    }
-  ]);
-  
-  const [alerts, setAlerts] = useState<Alert[]>([]);
-  const [recentActivities, setRecentActivities] = useState<Activity[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const quickActions = [
-    {
-      title: 'Inventory Management',
-      description: 'Monitor stock levels and manage alerts',
-      icon: <Package className="w-6 h-6" />,
-      href: '/inventory'
-    },
-    {
-      title: 'Sales Management',
-      description: 'Process sales and generate receipts',
-      icon: <ShoppingCart className="w-6 h-6" />,
-      href: '/sales'
-    },
-    {
-      title: 'Prescriptions',
-      description: 'Manage patient prescriptions',
-      icon: <FileText className="w-6 h-6" />,
-      href: '/prescriptions'
-    },
-    {
-      title: 'Reports & Analytics',
-      description: 'View performance metrics and insights',
-      icon: <Activity className="w-6 h-6" />,
-      href: '/reports'
-    }
-  ];
-
-  // Fetch dashboard data on component mount
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        setLoading(true);
-        
-        // Fetch stats, alerts, and activities in parallel
-        const [statsData, alertsData, activitiesData] = await Promise.all([
-          dashboardAPI.getStats(),
-          dashboardAPI.getAlerts(),
-          dashboardAPI.getRecentActivities()
-        ]);
-        
-        // Update stats
-        setStats([
-          {
-            title: 'Total Drugs',
-            value: statsData.totalDrugs.value,
-            change: statsData.totalDrugs.change,
-            icon: <Package className="w-6 h-6 text-white" />,
-            color: 'bg-blue-500'
-          },
-          {
-            title: 'Today\'s Sales',
-            value: statsData.todaySales.value,
-            change: statsData.todaySales.change,
-            icon: <ShoppingCart className="w-6 h-6 text-white" />,
-            color: 'bg-green-500'
-          },
-          {
-            title: 'Active Prescriptions',
-            value: statsData.activePrescriptions.value,
-            change: statsData.activePrescriptions.change,
-            icon: <FileText className="w-6 h-6 text-white" />,
-            color: 'bg-purple-500'
-          },
-          {
-            title: 'Registered Users',
-            value: statsData.registeredUsers.value,
-            change: statsData.registeredUsers.change,
-            icon: <Users className="w-6 h-6 text-white" />,
-            color: 'bg-orange-500'
-          }
-        ]);
-        
-        setAlerts(alertsData.alerts);
-        setRecentActivities(activitiesData.activities);
-      } catch (error) {
-        console.error('Error fetching dashboard data:', error);
-        // Use mock data when API fails
-        setStats([
-          {
-            title: 'Total Drugs',
-            value: mockDashboardData.stats.totalDrugs.value.toString(),
-            change: mockDashboardData.stats.totalDrugs.change,
-            icon: <Package className="w-6 h-6 text-white" />,
-            color: 'bg-blue-500'
-          },
-          {
-            title: 'Today\'s Sales',
-            value: mockDashboardData.stats.todaySales.value,
-            change: mockDashboardData.stats.todaySales.change,
-            icon: <ShoppingCart className="w-6 h-6 text-white" />,
-            color: 'bg-green-500'
-          },
-          {
-            title: 'Active Prescriptions',
-            value: mockDashboardData.stats.activePrescriptions.value.toString(),
-            change: mockDashboardData.stats.activePrescriptions.change,
-            icon: <FileText className="w-6 h-6 text-white" />,
-            color: 'bg-purple-500'
-          },
-          {
-            title: 'Registered Users',
-            value: mockDashboardData.stats.registeredUsers.value.toString(),
-            change: mockDashboardData.stats.registeredUsers.change,
-            icon: <Users className="w-6 h-6 text-white" />,
-            color: 'bg-orange-500'
-          }
-        ]);
-        
-        setAlerts(mockDashboardData.alerts);
-        setRecentActivities(mockDashboardData.activities);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchDashboardData();
-  }, []);
 
   // Get role-specific dashboard content with detailed descriptions, privileges, and restrictions
   const getRoleSpecificContent = () => {
@@ -278,7 +65,7 @@ export const Dashboard: React.FC = () => {
           subtitle: 'Full system access with all privileges',
           description: 'You have complete control over the pharmacy management system. Manage users, roles, privileges, system settings, and access all features.',
           roleBadge: 'SYSTEM_ADMIN',
-          roleColor: 'bg-red-500',
+          roleColor: 'bg-gradient-to-r from-red-500 to-pink-600',
           privileges: [
             'Full system access',
             'User management (create, edit, delete)',
@@ -297,7 +84,7 @@ export const Dashboard: React.FC = () => {
           subtitle: 'Pharmaceutical operations and patient care',
           description: 'Professional pharmacist with comprehensive medication and inventory management privileges. Manage prescriptions, dispense medications, manage inventory, create sales, and generate reports.',
           roleBadge: 'PHARMACEUTICAL_PROFESSIONAL',
-          roleColor: 'bg-blue-500',
+          roleColor: 'bg-gradient-to-r from-blue-500 to-cyan-600',
           privileges: [
             'Prescription management',
             'Inventory access and management',
@@ -316,7 +103,7 @@ export const Dashboard: React.FC = () => {
           subtitle: 'Business operations and staff oversight',
           description: 'Store-level manager with oversight of operations, staff, and business performance. Manage inventory, sales, prescriptions, users within your store, and generate comprehensive reports.',
           roleBadge: 'BUSINESS_MANAGER',
-          roleColor: 'bg-green-500',
+          roleColor: 'bg-gradient-to-r from-green-500 to-emerald-600',
           privileges: [
             'Business performance monitoring',
             'Staff management and oversight',
@@ -335,7 +122,7 @@ export const Dashboard: React.FC = () => {
           subtitle: 'Sales transactions and customer service',
           description: 'Front-line staff member responsible for sales transactions and customer service. Process sales, view inventory, handle prescriptions, and generate basic reports.',
           roleBadge: 'FRONT_LINE_STAFF',
-          roleColor: 'bg-purple-500',
+          roleColor: 'bg-gradient-to-r from-purple-500 to-violet-600',
           privileges: [
             'Sales transaction processing',
             'Inventory checking for customers',
@@ -353,7 +140,7 @@ export const Dashboard: React.FC = () => {
           subtitle: 'Overview and key metrics',
           description: 'Welcome to your personalized dashboard. View key metrics and access features based on your role and privileges.',
           roleBadge: 'USER',
-          roleColor: 'bg-gray-500',
+          roleColor: 'bg-gradient-to-r from-gray-500 to-slate-600',
           privileges: [
             'View assigned features',
             'Access role-specific content',
@@ -365,8 +152,6 @@ export const Dashboard: React.FC = () => {
     }
   };
 
-  const roleContent = getRoleSpecificContent();
-
   // Get privilege-based dashboard stats
   const getPrivilegeBasedStats = () => {
     const privilegeStats = [];
@@ -377,7 +162,8 @@ export const Dashboard: React.FC = () => {
         value: stats[0]?.value || '0',
         change: stats[0]?.change || 'Loading...',
         icon: <Package className="w-6 h-6 text-white" />,
-        color: 'bg-blue-500'
+        color: 'bg-gradient-to-r from-blue-500 to-blue-600',
+        trend: 'up'
       });
     }
 
@@ -387,7 +173,8 @@ export const Dashboard: React.FC = () => {
         value: stats[1]?.value || '₵0',
         change: stats[1]?.change || 'Loading...',
         icon: <ShoppingCart className="w-6 h-6 text-white" />,
-        color: 'bg-green-500'
+        color: 'bg-gradient-to-r from-green-500 to-emerald-600',
+        trend: 'up'
       });
     }
 
@@ -397,7 +184,8 @@ export const Dashboard: React.FC = () => {
         value: stats[2]?.value || '0',
         change: stats[2]?.change || 'Loading...',
         icon: <FileText className="w-6 h-6 text-white" />,
-        color: 'bg-purple-500'
+        color: 'bg-gradient-to-r from-purple-500 to-violet-600',
+        trend: 'stable'
       });
     }
 
@@ -407,7 +195,8 @@ export const Dashboard: React.FC = () => {
         value: stats[3]?.value || '0',
         change: stats[3]?.change || 'Loading...',
         icon: <Users className="w-6 h-6 text-white" />,
-        color: 'bg-orange-500'
+        color: 'bg-gradient-to-r from-orange-500 to-red-600',
+        trend: 'up'
       });
     }
 
@@ -423,7 +212,8 @@ export const Dashboard: React.FC = () => {
         title: 'Inventory Management',
         description: 'Monitor stock levels and manage alerts',
         icon: <Package className="w-6 h-6" />,
-        href: '/inventory'
+        href: '/inventory',
+        color: 'from-blue-500 to-blue-600'
       });
     }
 
@@ -432,7 +222,8 @@ export const Dashboard: React.FC = () => {
         title: 'Sales Management',
         description: 'Process sales and generate receipts',
         icon: <ShoppingCart className="w-6 h-6" />,
-        href: '/sales'
+        href: '/sales',
+        color: 'from-green-500 to-emerald-600'
       });
     }
 
@@ -441,7 +232,8 @@ export const Dashboard: React.FC = () => {
         title: 'Prescriptions',
         description: 'Manage patient prescriptions',
         icon: <FileText className="w-6 h-6" />,
-        href: '/prescriptions'
+        href: '/prescriptions',
+        color: 'from-purple-500 to-violet-600'
       });
     }
 
@@ -449,13 +241,61 @@ export const Dashboard: React.FC = () => {
       privilegeActions.push({
         title: 'Reports & Analytics',
         description: 'View performance metrics and insights',
-        icon: <Activity className="w-6 h-6" />,
-        href: '/reports'
+        icon: <BarChart3 className="w-6 h-6" />,
+        href: '/reports',
+        color: 'from-orange-500 to-red-600'
       });
     }
 
     return privilegeActions;
   };
+
+  // Mock data loading
+  useEffect(() => {
+    const loadData = async () => {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      setStats([
+        { value: '1,247', change: '+12% from last month' },
+        { value: '₵45,230', change: '+8% from yesterday' },
+        { value: '89', change: '+5 new today' },
+        { value: '156', change: '+3 this week' }
+      ]);
+
+      setAlerts([
+        {
+          title: 'Low Stock Alert',
+          message: '5 medications are running low on stock and need reordering',
+          severity: 'warning',
+          drugs: [
+            { name: 'Paracetamol 500mg', quantity: 15 },
+            { name: 'Amoxicillin 250mg', quantity: 8 }
+          ]
+        },
+        {
+          title: 'Expiry Warning',
+          message: '3 medications will expire within 30 days',
+          severity: 'danger',
+          drugs: [
+            { name: 'Vitamin C 1000mg', quantity: 45 }
+          ]
+        }
+      ]);
+
+      setRecentActivity([
+        { action: 'New sale completed', item: 'Prescription #1234', time: '2 minutes ago', type: 'success' },
+        { action: 'Inventory updated', item: 'Paracetamol stock', time: '15 minutes ago', type: 'info' },
+        { action: 'New user registered', item: 'Dr. Sarah Johnson', time: '1 hour ago', type: 'success' }
+      ]);
+
+      setLoading(false);
+    };
+
+    loadData();
+  }, []);
+
+  const roleContent = getRoleSpecificContent();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
@@ -468,9 +308,19 @@ export const Dashboard: React.FC = () => {
               <p className="text-lg text-gray-600 mt-1">{roleContent.subtitle}</p>
             </div>
             <div className="flex items-center space-x-3">
-              <span className={`px-3 py-1 rounded-full text-xs font-semibold text-white ${roleContent.roleColor}`}>
+              <span className={`px-4 py-2 rounded-full text-sm font-semibold text-white ${roleContent.roleColor} shadow-lg`}>
                 {roleContent.roleBadge}
               </span>
+              <div className="text-right">
+                <p className="text-sm text-gray-500">Today</p>
+                <p className="text-lg font-semibold text-gray-900">
+                  {new Date().toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    month: 'short', 
+                    day: 'numeric' 
+                  })}
+                </p>
+              </div>
             </div>
           </div>
           
@@ -478,23 +328,32 @@ export const Dashboard: React.FC = () => {
           
           {/* Privileges and Restrictions */}
           <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-              <h3 className="text-sm font-semibold text-green-800 mb-2">Your Privileges</h3>
-              <ul className="text-xs text-green-700 space-y-1">
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-6 shadow-sm">
+              <h3 className="text-lg font-semibold text-green-800 mb-3 flex items-center">
+                <CheckCircle className="w-5 h-5 mr-2" />
+                Your Privileges
+              </h3>
+              <ul className="text-sm text-green-700 space-y-2">
                 {roleContent.privileges.map((privilege, index) => (
                   <li key={index} className="flex items-center">
-                    <svg className="w-3 h-3 text-green-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
+                    <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
                     {privilege}
                   </li>
                 ))}
               </ul>
             </div>
             
-            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-              <h3 className="text-sm font-semibold text-orange-800 mb-2">Access Restrictions</h3>
-              <p className="text-xs text-orange-700">{roleContent.restrictions}</p>
+            <div className="bg-gradient-to-r from-orange-50 to-red-50 border border-orange-200 rounded-xl p-6 shadow-sm">
+              <h3 className="text-lg font-semibold text-orange-800 mb-3 flex items-center">
+                <AlertTriangle className="w-5 h-5 mr-2" />
+                Access Restrictions
+              </h3>
+              <p className="text-sm text-orange-700">{roleContent.restrictions}</p>
+              <div className="mt-3">
+                <span className="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-medium">
+                  Access Level: {roleContent.accessLevel}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -505,12 +364,15 @@ export const Dashboard: React.FC = () => {
         {/* Dashboard Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {getPrivilegeBasedStats().map((stat, index) => (
-            <div key={index} className={`${stat.color} rounded-xl p-6 text-white shadow-lg`}>
+            <div key={index} className={`${stat.color} rounded-xl p-6 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-1`}>
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm opacity-90">{stat.title}</p>
                   <p className="text-2xl font-bold mt-1">{stat.value}</p>
-                  <p className="text-xs opacity-75 mt-1">{stat.change}</p>
+                  <div className="flex items-center mt-2">
+                    <TrendingUp className={`w-4 h-4 mr-1 ${stat.trend === 'up' ? 'text-green-300' : stat.trend === 'down' ? 'text-red-300' : 'text-blue-300'}`} />
+                    <p className="text-xs opacity-75">{stat.change}</p>
+                  </div>
                 </div>
                 <div className="opacity-80">
                   {stat.icon}
@@ -521,77 +383,112 @@ export const Dashboard: React.FC = () => {
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {getPrivilegeBasedQuickActions().map((action, index) => (
-            <QuickAction
-              key={index}
-              title={action.title}
-              description={action.description}
-              icon={action.icon}
-              href={action.href}
-            />
-          ))}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-gray-900">Quick Actions</h2>
+            <p className="text-sm text-gray-500">Access your most used features</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {getPrivilegeBasedQuickActions().map((action, index) => (
+              <QuickAction
+                key={index}
+                title={action.title}
+                description={action.description}
+                icon={action.icon}
+                href={action.href}
+                color={action.color}
+              />
+            ))}
+          </div>
         </div>
 
         {/* Recent Activity and Alerts Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Recent Activity */}
           <div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Activity</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-gray-900">Recent Activity</h2>
+              <button className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center">
+                View All
+                <ArrowRight className="w-4 h-4 ml-1" />
+              </button>
+            </div>
             {loading ? (
-              <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-6 border border-gray-200">
-                <div className="animate-pulse space-y-4">
-                  {Array.from({ length: 3 }).map((_, index) => (
-                    <div key={index} className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse"></div>
-                      <div className="flex-1">
-                        <div className="h-3 bg-gray-200 rounded w-3/4 mb-2 animate-pulse"></div>
-                        <div className="h-2 bg-gray-200 rounded w-1/2 animate-pulse"></div>
+              <div className="card">
+                <div className="card-body">
+                  <div className="space-y-4">
+                    {Array.from({ length: 3 }).map((_, index) => (
+                      <div key={index} className="flex items-center space-x-3">
+                        <div className="loading-skeleton w-8 h-8 rounded-full"></div>
+                        <div className="flex-1">
+                          <div className="loading-skeleton h-3 rounded w-3/4 mb-2"></div>
+                          <div className="loading-skeleton h-2 rounded w-1/2"></div>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               </div>
-            ) : recentActivities.length > 0 ? (
-              <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-6 border border-gray-200">
-                <div className="space-y-4">
-                  {recentActivities.map((activity, index) => (
-                    <div key={index} className="flex items-center space-x-3">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                        activity.type === 'success' ? 'bg-green-500' :
-                        activity.type === 'warning' ? 'bg-yellow-500' :
-                        'bg-blue-500'
-                      }`} />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-gray-900">
-                          {activity.action}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          {activity.item} • {activity.time}
-                        </p>
+            ) : recentActivity.length > 0 ? (
+              <div className="card">
+                <div className="card-body">
+                  <div className="space-y-4">
+                    {recentActivity.map((activity, index) => (
+                      <div key={index} className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                          activity.type === 'success' ? 'bg-green-100 text-green-600' :
+                          activity.type === 'warning' ? 'bg-yellow-100 text-yellow-600' :
+                          'bg-blue-100 text-blue-600'
+                        }`}>
+                          {activity.type === 'success' ? (
+                            <CheckCircle className="w-4 h-4" />
+                          ) : activity.type === 'warning' ? (
+                            <AlertTriangle className="w-4 h-4" />
+                          ) : (
+                            <CheckCircle className="w-4 h-4" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-gray-900">
+                            {activity.action}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {activity.item} • {activity.time}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               </div>
             ) : (
-              <div className="text-center py-8">
-                <div className="text-gray-400 mb-2">
-                  <Activity className="w-12 h-12 mx-auto" />
+              <div className="card">
+                <div className="card-body text-center py-8">
+                  <div className="text-gray-400 mb-2">
+                    <CheckCircle className="w-12 h-12 mx-auto" />
+                  </div>
+                  <p className="text-gray-500 text-sm">No recent activities</p>
                 </div>
-                <p className="text-gray-500 text-sm">No recent activities</p>
               </div>
             )}
           </div>
 
           {/* Alerts Section */}
           <div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Alerts & Notifications</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-gray-900">Alerts & Notifications</h2>
+              <button className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center">
+                View All
+                <ArrowRight className="w-4 h-4 ml-1" />
+              </button>
+            </div>
             {loading ? (
-              <div className="bg-gray-50 border border-gray-200 rounded-xl p-6">
-                <div className="animate-pulse">
-                  <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
-                  <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+              <div className="card">
+                <div className="card-body">
+                  <div className="animate-pulse space-y-4">
+                    <div className="loading-skeleton h-4 rounded w-1/4 mb-2"></div>
+                    <div className="loading-skeleton h-3 rounded w-3/4"></div>
+                  </div>
                 </div>
               </div>
             ) : alerts.length > 0 ? (
@@ -599,96 +496,135 @@ export const Dashboard: React.FC = () => {
                 {alerts.map((alert, index) => (
                   <div 
                     key={index}
-                    className={`border rounded-xl p-6 shadow-lg ${
+                    className={`card border-l-4 ${
                       alert.severity === 'danger' 
-                        ? 'bg-gradient-to-r from-red-50 to-pink-50 border-red-200' 
+                        ? 'border-l-red-500 bg-red-50' 
                         : alert.severity === 'warning'
-                        ? 'bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-200'
-                        : 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200'
+                        ? 'border-l-yellow-500 bg-yellow-50'
+                        : 'border-l-blue-500 bg-blue-50'
                     }`}
                   >
-                    <div className="flex items-start">
-                      <div className={`p-2 rounded-lg mr-4 ${
-                        alert.severity === 'danger' 
-                          ? 'bg-red-100' 
-                          : alert.severity === 'warning'
-                          ? 'bg-yellow-100'
-                          : 'bg-blue-100'
-                      }`}>
-                        <AlertTriangle className={`w-6 h-6 ${
+                    <div className="card-body">
+                      <div className="flex items-start">
+                        <div className={`p-2 rounded-lg mr-4 ${
                           alert.severity === 'danger' 
-                            ? 'text-red-600' 
+                            ? 'bg-red-100' 
                             : alert.severity === 'warning'
-                            ? 'text-yellow-600'
-                            : 'text-blue-600'
-                        }`} />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className={`text-lg font-semibold mb-2 ${
-                          alert.severity === 'danger' 
-                            ? 'text-red-800' 
-                            : alert.severity === 'warning'
-                            ? 'text-yellow-800'
-                            : 'text-blue-800'
+                            ? 'bg-yellow-100'
+                            : 'bg-blue-100'
                         }`}>
-                          {alert.title}
-                        </h3>
-                        <p className={`text-sm leading-relaxed mb-3 ${
-                          alert.severity === 'danger' 
-                            ? 'text-red-700' 
-                            : alert.severity === 'warning'
-                            ? 'text-yellow-700'
-                            : 'text-blue-700'
-                        }`}>
-                          {alert.message}
-                        </p>
-                        {alert.drugs && alert.drugs.length > 0 && (
-                          <div className="mb-3">
-                            <p className="text-xs font-medium text-gray-600 mb-2">Affected Medications:</p>
-                            <div className="flex flex-wrap gap-2">
-                              {alert.drugs.map((drug, drugIndex) => (
-                                <span 
-                                  key={drugIndex}
-                                  className="px-2 py-1 bg-white/50 rounded text-xs font-medium text-gray-700"
-                                >
-                                  {drug.name} (Qty: {drug.quantity})
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                        <button 
-                          onClick={() => navigate('/inventory')}
-                          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
+                          <AlertTriangle className={`w-6 h-6 ${
                             alert.severity === 'danger' 
-                              ? 'bg-red-600 hover:bg-red-700 text-white' 
+                              ? 'text-red-600' 
                               : alert.severity === 'warning'
-                              ? 'bg-yellow-600 hover:bg-yellow-700 text-white'
-                              : 'bg-blue-600 hover:bg-blue-700 text-white'
-                          }`}
-                        >
-                          View Inventory
-                        </button>
+                              ? 'text-yellow-600'
+                              : 'text-blue-600'
+                          }`} />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className={`text-lg font-semibold mb-2 ${
+                            alert.severity === 'danger' 
+                              ? 'text-red-800' 
+                              : alert.severity === 'warning'
+                              ? 'text-yellow-800'
+                              : 'text-blue-800'
+                          }`}>
+                            {alert.title}
+                          </h3>
+                          <p className={`text-sm leading-relaxed mb-3 ${
+                            alert.severity === 'danger' 
+                              ? 'text-red-700' 
+                              : alert.severity === 'warning'
+                              ? 'text-yellow-700'
+                              : 'text-blue-700'
+                          }`}>
+                            {alert.message}
+                          </p>
+                          {alert.drugs && alert.drugs.length > 0 && (
+                            <div className="mb-3">
+                              <p className="text-xs font-medium text-gray-600 mb-2">Affected Medications:</p>
+                              <div className="flex flex-wrap gap-2">
+                                {alert.drugs.map((drug, drugIndex) => (
+                                  <span 
+                                    key={drugIndex}
+                                    className="px-2 py-1 bg-white/50 rounded text-xs font-medium text-gray-700 border"
+                                  >
+                                    {drug.name} (Qty: {drug.quantity})
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          <button 
+                            onClick={() => navigate('/inventory')}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
+                              alert.severity === 'danger' 
+                                ? 'bg-red-600 hover:bg-red-700 text-white' 
+                                : alert.severity === 'warning'
+                                ? 'bg-yellow-600 hover:bg-yellow-700 text-white'
+                                : 'bg-blue-600 hover:bg-blue-700 text-white'
+                            }`}
+                          >
+                            View Inventory
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="bg-green-50 border border-green-200 rounded-xl p-6">
-                <div className="flex items-center">
-                  <div className="p-2 bg-green-100 rounded-lg mr-4">
-                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-green-800">All Good!</h3>
-                    <p className="text-sm text-green-700">No alerts at the moment. Your inventory is well-managed.</p>
+              <div className="card bg-green-50 border-green-200">
+                <div className="card-body">
+                  <div className="flex items-center">
+                    <div className="p-2 bg-green-100 rounded-lg mr-4">
+                      <CheckCircle className="w-6 h-6 text-green-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-green-800">All Good!</h3>
+                      <p className="text-sm text-green-700">No alerts at the moment. Your inventory is well-managed.</p>
+                    </div>
                   </div>
                 </div>
               </div>
             )}
+          </div>
+        </div>
+
+        {/* Additional Features Section */}
+        <div className="mt-12">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">System Overview</h2>
+            <p className="text-gray-600">Quick insights and system status</p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="card text-center p-6">
+              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Calendar className="w-6 h-6 text-blue-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">System Uptime</h3>
+              <p className="text-3xl font-bold text-green-600">99.9%</p>
+              <p className="text-sm text-gray-500 mt-1">Last 30 days</p>
+            </div>
+            
+            <div className="card text-center p-6">
+              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="w-6 h-6 text-green-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Active Users</h3>
+              <p className="text-3xl font-bold text-blue-600">24</p>
+              <p className="text-sm text-gray-500 mt-1">Currently online</p>
+            </div>
+            
+            <div className="card text-center p-6">
+              <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <MapPin className="w-6 h-6 text-purple-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Store Locations</h3>
+              <p className="text-3xl font-bold text-purple-600">3</p>
+              <p className="text-sm text-gray-500 mt-1">Active branches</p>
+            </div>
           </div>
         </div>
       </div>
