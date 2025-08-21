@@ -269,14 +269,27 @@ export const Dashboard: React.FC = () => {
       <div className="relative bg-gradient-to-r from-white via-blue-50 to-purple-50 shadow-lg border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-purple-800 bg-clip-text text-transparent">
-                Dashboard
-              </h1>
-              <p className="text-gray-600 mt-2 text-lg">
-                Welcome back, <span className="font-semibold text-blue-600">{user?.name}</span>! Here's what's happening today.
-              </p>
-            </div>
+                      <div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-purple-800 bg-clip-text text-transparent">
+              {user?.role === 'ADMINISTRATOR' ? 'Administrator Dashboard' :
+               user?.role === 'PHARMACIST' ? 'Pharmacist Dashboard' :
+               user?.role === 'STORE_MANAGER' ? 'Store Manager Dashboard' :
+               user?.role === 'CASHIER' ? 'Cashier Dashboard' : 'Dashboard'}
+            </h1>
+            <p className="text-gray-600 mt-2 text-lg">
+              Welcome back, <span className="font-semibold text-blue-600">{user?.name}</span>! 
+              {user?.role === 'ADMINISTRATOR' ? ' You have full system access.' :
+               user?.role === 'PHARMACIST' ? ' You can manage prescriptions and inventory.' :
+               user?.role === 'STORE_MANAGER' ? ' You can manage business operations.' :
+               user?.role === 'CASHIER' ? ' You can process sales and transactions.' : 
+               ' Here\'s what\'s happening today.'}
+            </p>
+            {user?.role && (
+              <div className="mt-2 inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                Role: {user.role}
+              </div>
+            )}
+          </div>
             <div className="text-right bg-white/80 backdrop-blur-sm rounded-lg p-4 shadow-sm">
               <p className="text-sm text-gray-500 font-medium">Today</p>
               <p className="text-lg font-semibold text-gray-900">

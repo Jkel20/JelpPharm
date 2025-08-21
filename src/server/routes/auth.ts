@@ -497,7 +497,15 @@ router.get('/me', auth, async (req: express.Request, res: express.Response) => {
     
     const user = await User.findById(req.user.userId)
       .select('-password')
-      .populate('storeId', 'name address.city address.region');
+      .populate('storeId', 'name address.city address.region')
+      .populate({
+        path: 'roleId',
+        select: 'name code description privileges',
+        populate: {
+          path: 'privileges',
+          select: 'name code category description'
+        }
+      });
 
     if (!user) {
       return res.status(404).json({
@@ -516,6 +524,98 @@ router.get('/me', auth, async (req: express.Request, res: express.Response) => {
     res.status(500).json({
       success: false,
       message: 'Server error while fetching profile'
+    });
+  }
+});
+
+// @route   GET /api/auth/my-dashboard
+// @desc    Get current user's role-based dashboard info
+// @access  Private
+router.get('/my-dashboard', auth, async (req: express.Request, res: express.Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+    }
+    
+    const user = await User.findById(req.user.userId)
+      .select('-password')
+      .populate({
+        path: 'roleId',
+        select: 'name code description privileges',
+        populate: {
+          path: 'privileges',
+          select: 'name code category description'
+        }
+      });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Determine which dashboard the user should see based on their role
+    let dashboardType = 'general';
+    let dashboardEndpoint = '/api/dashboard';
+    let requiredPrivilege: string | null = null;
+
+    if (user.roleId) {
+      const role = user.roleId as any;
+      
+      if (role.code === 'ADMINISTRATOR') {
+        dashboardType = 'admin';
+        dashboardEndpoint = '/api/dashboard/admin';
+        requiredPrivilege = 'SYSTEM_SETTINGS';
+      } else if (role.code === 'PHARMACIST') {
+        dashboardType = 'pharmacist';
+        dashboardEndpoint = '/api/dashboard/pharmacist';
+        requiredPrivilege = 'MANAGE_PRESCRIPTIONS';
+      } else if (role.code === 'STORE_MANAGER') {
+        dashboardType = 'store-manager';
+        dashboardEndpoint = '/api/dashboard/store-manager';
+        requiredPrivilege = 'MANAGE_INVENTORY';
+      } else if (role.code === 'CASHIER') {
+        dashboardType = 'cashier';
+        dashboardEndpoint = '/api/dashboard/cashier';
+        requiredPrivilege = 'CREATE_SALES';
+      }
+    }
+
+    res.json({
+      success: true,
+      data: {
+        user: {
+          id: user._id.toString(),
+          fullName: user.fullName,
+          username: user.username,
+          email: user.email,
+          role: user.roleId ? (user.roleId as any).code : 'UNKNOWN',
+          roleDetails: user.roleId ? {
+            name: (user.roleId as any).name,
+            code: (user.roleId as any).code,
+            description: (user.roleId as any).description,
+            privileges: (user.roleId as any).privileges
+          } : null
+        },
+        dashboard: {
+          type: dashboardType,
+          endpoint: dashboardEndpoint,
+          requiredPrivilege,
+          title: `${(user.roleId as any)?.name || 'User'} Dashboard`,
+          description: `Welcome to your personalized ${dashboardType} dashboard`
+        }
+      }
+    });
+
+  } catch (error) {
+    logger.error('Get dashboard info error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while fetching dashboard info'
     });
   }
 });

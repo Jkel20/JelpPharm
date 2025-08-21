@@ -81,18 +81,77 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const userData = data.data.user;
         const token = data.data.token;
         
-        const user: User = {
-          id: userData.id,
-          email: userData.email,
-          name: userData.fullName,
-          role: userData.role,
-          storeId: userData.storeId
-        };
-        
-        console.log('AuthContext: Setting user:', user);
-        setUser(user);
-        setAuthToken(token);
-        console.log('AuthContext: Login completed successfully');
+        // Fetch detailed user info including role and privileges
+        try {
+          const userResponse = await fetch(buildApiUrl('/auth/my-dashboard'), {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          });
+          
+          if (userResponse.ok) {
+            const userDataDetailed = await userResponse.json();
+            if (userDataDetailed.success) {
+              const detailedUser = userDataDetailed.data.user;
+              const dashboard = userDataDetailed.data.dashboard;
+              
+              const user: User = {
+                id: detailedUser.id,
+                email: detailedUser.email,
+                name: detailedUser.fullName,
+                role: detailedUser.role,
+                storeId: detailedUser.storeId
+              };
+              
+              console.log('AuthContext: Setting detailed user:', user);
+              console.log('AuthContext: Dashboard info:', dashboard);
+              setUser(user);
+              setAuthToken(token);
+              console.log('AuthContext: Login completed successfully with role details');
+            } else {
+              // Fallback to basic user info
+              const user: User = {
+                id: userData.id,
+                email: userData.email,
+                name: userData.fullName,
+                role: userData.role,
+                storeId: userData.storeId
+              };
+              
+              setUser(user);
+              setAuthToken(token);
+              console.log('AuthContext: Login completed with basic user info');
+            }
+          } else {
+            // Fallback to basic user info
+            const user: User = {
+              id: userData.id,
+              email: userData.email,
+              name: userData.fullName,
+              role: userData.role,
+              storeId: userData.storeId
+            };
+            
+            setUser(user);
+            setAuthToken(token);
+            console.log('AuthContext: Login completed with basic user info');
+          }
+        } catch (userError) {
+          console.warn('AuthContext: Could not fetch detailed user info, using basic info:', userError);
+          // Fallback to basic user info
+          const user: User = {
+            id: userData.id,
+            email: userData.email,
+            name: userData.fullName,
+            role: userData.role,
+            storeId: userData.storeId
+          };
+          
+          setUser(user);
+          setAuthToken(token);
+          console.log('AuthContext: Login completed with basic user info');
+        }
       } else {
         throw new Error('Invalid response from server');
       }
