@@ -93,7 +93,16 @@ app.use('/api/test-privileges', testPrivilegeRoutes);
 app.use('/api/roles', roleRoutes);
 app.use('/api/privileges', privilegeRoutes);
 
-// Serve static files from React build
+// Serve static files from React build (must come before catch-all handler)
+app.use('/static', express.static(path.join(__dirname, '../../client/build/static'), {
+  setHeaders: (res, path) => {
+    if (path.endsWith('.css')) {
+      res.setHeader('Content-Type', 'text/css');
+    } else if (path.endsWith('.js')) {
+      res.setHeader('Content-Type', 'application/javascript');
+    }
+  }
+}));
 app.use(express.static(path.join(__dirname, '../../client/build')));
 
 // Catch-all handler: send back React's index.html file for any non-API routes
