@@ -3,7 +3,7 @@ import { auth, requirePrivilege, requireAllPrivileges } from '../middleware/auth
 import { Privilege } from '../models/Privilege';
 import { Role } from '../models/Role';
 import { logger } from '../config/logger';
-import asyncHandler from 'express-async-handler';
+import { asyncHandler } from '../middleware/errorHandler';
 
 const router = express.Router();
 

@@ -4,7 +4,7 @@ import { Role } from '../models/Role';
 import { Privilege } from '../models/Privilege';
 import { User } from '../models/User';
 import { logger } from '../config/logger';
-import asyncHandler from 'express-async-handler';
+import { asyncHandler } from '../middleware/errorHandler';
 
 const router = express.Router();
 
