@@ -203,6 +203,58 @@ export const Dashboard: React.FC = () => {
     return privilegeStats;
   };
 
+  // Safe color mapping for stats
+  const getStatColorClasses = (color: string) => {
+    const colorMap: Record<string, string> = {
+      'bg-gradient-to-r from-blue-500 to-blue-600': 'bg-gradient-to-r from-blue-500 to-blue-600',
+      'bg-gradient-to-r from-green-500 to-emerald-600': 'bg-gradient-to-r from-green-500 to-emerald-600',
+      'bg-gradient-to-r from-purple-500 to-violet-600': 'bg-gradient-to-r from-purple-500 to-violet-600',
+      'bg-gradient-to-r from-orange-500 to-red-600': 'bg-gradient-to-r from-orange-500 to-red-600'
+    };
+    return colorMap[color] || 'bg-gradient-to-r from-blue-500 to-blue-600';
+  };
+
+  // Safe trend color mapping
+  const getTrendColorClasses = (trend: string) => {
+    const trendMap: Record<string, string> = {
+      'up': 'text-green-300',
+      'down': 'text-red-300',
+      'stable': 'text-blue-300'
+    };
+    return trendMap[trend] || 'text-blue-300';
+  };
+
+  // Safe severity color mapping
+  const getSeverityColorClasses = (severity: string) => {
+    const severityMap: Record<string, { border: string; bg: string; icon: string; text: string; content: string; button: string }> = {
+      'danger': {
+        border: 'border-l-red-500 bg-red-50',
+        bg: 'bg-red-100',
+        icon: 'text-red-600',
+        text: 'text-red-800',
+        content: 'text-red-700',
+        button: 'bg-red-600 hover:bg-red-700 text-white'
+      },
+      'warning': {
+        border: 'border-l-yellow-500 bg-yellow-50',
+        bg: 'bg-yellow-100',
+        icon: 'text-yellow-600',
+        text: 'text-yellow-800',
+        content: 'text-yellow-700',
+        button: 'bg-yellow-600 hover:bg-yellow-700 text-white'
+      },
+      'info': {
+        border: 'border-l-blue-500 bg-blue-50',
+        bg: 'bg-blue-100',
+        icon: 'text-blue-600',
+        text: 'text-blue-800',
+        content: 'text-blue-700',
+        button: 'bg-blue-600 hover:bg-blue-700 text-white'
+      }
+    };
+    return severityMap[severity] || severityMap['info'];
+  };
+
   // Get privilege-based quick actions
   const getPrivilegeBasedQuickActions = () => {
     const privilegeActions = [];
@@ -364,13 +416,13 @@ export const Dashboard: React.FC = () => {
         {/* Dashboard Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {getPrivilegeBasedStats().map((stat, index) => (
-            <div key={index} className={`${stat.color} rounded-xl p-6 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-1`}>
+            <div key={index} className={`${getStatColorClasses(stat.color)} rounded-xl p-6 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-1`}>
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm opacity-90">{stat.title}</p>
                   <p className="text-2xl font-bold mt-1">{stat.value}</p>
                   <div className="flex items-center mt-2">
-                    <TrendingUp className={`w-4 h-4 mr-1 ${stat.trend === 'up' ? 'text-green-300' : stat.trend === 'down' ? 'text-red-300' : 'text-blue-300'}`} />
+                    <TrendingUp className={`w-4 h-4 mr-1 ${getTrendColorClasses(stat.trend)}`} />
                     <p className="text-xs opacity-75">{stat.change}</p>
                   </div>
                 </div>
@@ -496,48 +548,18 @@ export const Dashboard: React.FC = () => {
                 {alerts.map((alert, index) => (
                   <div 
                     key={index}
-                    className={`card border-l-4 ${
-                      alert.severity === 'danger' 
-                        ? 'border-l-red-500 bg-red-50' 
-                        : alert.severity === 'warning'
-                        ? 'border-l-yellow-500 bg-yellow-50'
-                        : 'border-l-blue-500 bg-blue-50'
-                    }`}
+                    className={`card border-l-4 ${getSeverityColorClasses(alert.severity).border}`}
                   >
                     <div className="card-body">
                       <div className="flex items-start">
-                        <div className={`p-2 rounded-lg mr-4 ${
-                          alert.severity === 'danger' 
-                            ? 'bg-red-100' 
-                            : alert.severity === 'warning'
-                            ? 'bg-yellow-100'
-                            : 'bg-blue-100'
-                        }`}>
-                          <AlertTriangle className={`w-6 h-6 ${
-                            alert.severity === 'danger' 
-                              ? 'text-red-600' 
-                              : alert.severity === 'warning'
-                              ? 'text-yellow-600'
-                              : 'text-blue-600'
-                          }`} />
+                        <div className={`p-2 rounded-lg mr-4 ${getSeverityColorClasses(alert.severity).bg}`}>
+                          <AlertTriangle className={`w-6 h-6 ${getSeverityColorClasses(alert.severity).icon}`} />
                         </div>
                         <div className="flex-1">
-                          <h3 className={`text-lg font-semibold mb-2 ${
-                            alert.severity === 'danger' 
-                              ? 'text-red-800' 
-                              : alert.severity === 'warning'
-                              ? 'text-yellow-800'
-                              : 'text-blue-800'
-                          }`}>
+                          <h3 className={`text-lg font-semibold mb-2 ${getSeverityColorClasses(alert.severity).text}`}>
                             {alert.title}
                           </h3>
-                          <p className={`text-sm leading-relaxed mb-3 ${
-                            alert.severity === 'danger' 
-                              ? 'text-red-700' 
-                              : alert.severity === 'warning'
-                              ? 'text-yellow-700'
-                              : 'text-blue-700'
-                          }`}>
+                          <p className={`text-sm leading-relaxed mb-3 ${getSeverityColorClasses(alert.severity).content}`}>
                             {alert.message}
                           </p>
                           {alert.drugs && alert.drugs.length > 0 && (
@@ -557,13 +579,7 @@ export const Dashboard: React.FC = () => {
                           )}
                           <button 
                             onClick={() => navigate('/inventory')}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
-                              alert.severity === 'danger' 
-                                ? 'bg-red-600 hover:bg-red-700 text-white' 
-                                : alert.severity === 'warning'
-                                ? 'bg-yellow-600 hover:bg-yellow-700 text-white'
-                                : 'bg-blue-600 hover:bg-blue-700 text-white'
-                            }`}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${getSeverityColorClasses(alert.severity).button}`}
                           >
                             View Inventory
                           </button>
