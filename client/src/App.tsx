@@ -13,7 +13,7 @@ import { Reports } from './pages/Reports';
 import { Settings } from './pages/Settings';
 import MainLayout from './components/layout/MainLayout';
 // Protected Route component
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> => ({ children }) => {
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
 
   console.log('ProtectedRoute: isAuthenticated:', isAuthenticated, 'isLoading:', isLoading);
