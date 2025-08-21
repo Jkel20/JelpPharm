@@ -12,7 +12,7 @@ import PDFDocument from 'pdfkit';
 const router = express.Router();
 
 // Get all sales with pagination and filtering
-router.get('/', auth, asyncHandler(async (req: express.Request, res: express.Response) => {
+router.get('/', auth, requirePrivilege('VIEW_SALES'), asyncHandler(async (req: express.Request, res: express.Response) => {
   const { page = 1, limit = 10, search, startDate, endDate, storeId, status } = req.query;
   const skip = (Number(page) - 1) * Number(limit);
   
@@ -60,7 +60,7 @@ router.get('/', auth, asyncHandler(async (req: express.Request, res: express.Res
 }));
 
 // Get single sale
-router.get('/:id', auth, asyncHandler(async (req: express.Request, res: express.Response) => {
+router.get('/:id', auth, requirePrivilege('VIEW_SALES'), asyncHandler(async (req: express.Request, res: express.Response) => {
   const sale = await Sale.findById(req.params.id)
     .populate('drug', 'name genericName brandName strength form manufacturer')
     .populate('store', 'name location address phone')
@@ -230,7 +230,7 @@ router.delete('/:id', auth, requirePrivilege('MANAGE_SALES'), asyncHandler(async
 }));
 
 // Generate PDF receipt
-router.get('/:id/receipt', auth, asyncHandler(async (req: express.Request, res: express.Response) => {
+router.get('/:id/receipt', auth, requirePrivilege('VIEW_SALES'), asyncHandler(async (req: express.Request, res: express.Response) => {
   const sale = await Sale.findById(req.params.id)
     .populate('drug', 'name genericName brandName strength form')
     .populate('store', 'name location address phone')

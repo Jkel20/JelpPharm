@@ -1,10 +1,10 @@
 import express from 'express';
-import { auth } from '../middleware/auth';
+import { auth, requirePrivilege } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
 
 const router = express.Router();
 
-router.get('/', auth, asyncHandler(async (_req: express.Request, res: express.Response) => {
+router.get('/', auth, requirePrivilege('VIEW_USERS'), asyncHandler(async (_req: express.Request, res: express.Response) => {
   res.json({
     success: true,
     message: 'Stores route - Coming soon',

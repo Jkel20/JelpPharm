@@ -11,6 +11,7 @@ declare global {
       user?: {
         userId: string;
         role: string;
+        roleId: string; // Add roleId for privilege checking
         storeId?: string;
       };
     }
@@ -50,8 +51,8 @@ export const auth = async (req: Request, res: Response, next: NextFunction) => {
       // Verify token
       const decoded = jwt.verify(token, (process.env['JWT_SECRET'] || 'fallback-secret') as string) as any;
       
-      // Check if user still exists
-      const user = await User.findById(decoded.userId).select('_id role storeId isActive');
+      // Check if user still exists and get roleId
+      const user = await User.findById(decoded.userId).select('_id roleId storeId isActive');
       
       if (!user) {
         return res.status(401).json({
@@ -67,10 +68,11 @@ export const auth = async (req: Request, res: Response, next: NextFunction) => {
         });
       }
 
-      // Add user info to request
+      // Add user info to request including roleId for privilege checking
       req.user = {
         userId: decoded.userId,
         role: decoded.role,
+        roleId: user.roleId.toString(), // Convert ObjectId to string
         storeId: decoded.storeId
       };
 
@@ -150,13 +152,14 @@ export const optionalAuth = async (req: Request, _res: Response, next: NextFunct
     const token = authHeader.substring(7);
 
     try {
-             const decoded = jwt.verify(token, (process.env['JWT_SECRET'] || 'fallback-secret') as string) as any;
-      const user = await User.findById(decoded.userId).select('_id role storeId isActive');
+      const decoded = jwt.verify(token, (process.env['JWT_SECRET'] || 'fallback-secret') as string) as any;
+      const user = await User.findById(decoded.userId).select('_id roleId storeId isActive');
       
       if (user && user.isActive) {
         req.user = {
           userId: decoded.userId,
           role: decoded.role,
+          roleId: user.roleId.toString(), // Convert ObjectId to string
           storeId: decoded.storeId
         };
       }
@@ -195,23 +198,27 @@ export const requirePrivilege = (privilegeCode: string) => {
         });
       }
 
+      logger.debug(`Checking privilege ${privilegeCode} for user ${req.user.userId} with role ${req.user.role}`);
+
       // Import the userHasPrivilege function
       const { userHasPrivilege } = await import('../data/seedRoles');
       
       const hasPrivilege = await userHasPrivilege(req.user.userId, privilegeCode);
       
       if (!hasPrivilege) {
-        logger.warn(`User ${req.user.userId} attempted to access resource requiring privilege: ${privilegeCode}`);
+        logger.warn(`User ${req.user.userId} (${req.user.role}) attempted to access resource requiring privilege: ${privilegeCode}`);
         return res.status(403).json({
           success: false,
           message: 'Access denied. Insufficient privileges for this action.',
-          requiredPrivilege: privilegeCode
+          requiredPrivilege: privilegeCode,
+          userRole: req.user.role
         });
       }
 
+      logger.debug(`User ${req.user.userId} (${req.user.role}) has privilege ${privilegeCode}`);
       next();
     } catch (error) {
-      logger.error(`Error checking privilege ${privilegeCode}:`, error);
+      logger.error(`Error checking privilege ${privilegeCode} for user ${req.user?.userId}:`, error);
       return res.status(500).json({
         success: false,
         message: 'Error verifying user privileges'

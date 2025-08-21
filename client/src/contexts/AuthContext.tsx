@@ -24,7 +24,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (identifier: string, password: string) => Promise<void>;
   logout: () => void;
-  register: (userData: any) => Promise<void>;
+  hasPrivilege: (privilegeCode: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -123,6 +123,43 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setUser(null);
     setDashboardInfo(null);
     removeAuthToken();
+    console.log('AuthContext: User logged out');
+  };
+
+  // Check if user has a specific privilege based on their role
+  const hasPrivilege = (privilegeCode: string): boolean => {
+    if (!user) return false;
+
+    // Define privilege mappings for each role
+    const rolePrivileges: Record<string, string[]> = {
+      'Administrator': [
+        'VIEW_USERS', 'CREATE_USERS', 'EDIT_USERS', 'DELETE_USERS',
+        'VIEW_INVENTORY', 'MANAGE_INVENTORY', 'ADJUST_STOCK',
+        'VIEW_SALES', 'CREATE_SALES', 'MANAGE_SALES',
+        'VIEW_PRESCRIPTIONS', 'MANAGE_PRESCRIPTIONS', 'DISPENSE_MEDICATIONS',
+        'VIEW_REPORTS', 'GENERATE_REPORTS', 'SYSTEM_SETTINGS', 'DATABASE_MANAGEMENT'
+      ],
+      'Pharmacist': [
+        'VIEW_USERS', 'VIEW_INVENTORY', 'MANAGE_INVENTORY', 'ADJUST_STOCK',
+        'VIEW_SALES', 'CREATE_SALES', 'MANAGE_SALES',
+        'VIEW_PRESCRIPTIONS', 'MANAGE_PRESCRIPTIONS', 'DISPENSE_MEDICATIONS',
+        'VIEW_REPORTS', 'GENERATE_REPORTS'
+      ],
+      'Store Manager': [
+        'VIEW_USERS', 'CREATE_USERS', 'EDIT_USERS',
+        'VIEW_INVENTORY', 'MANAGE_INVENTORY', 'ADJUST_STOCK',
+        'VIEW_SALES', 'CREATE_SALES', 'MANAGE_SALES',
+        'VIEW_PRESCRIPTIONS', 'MANAGE_PRESCRIPTIONS', 'DISPENSE_MEDICATIONS',
+        'VIEW_REPORTS', 'GENERATE_REPORTS'
+      ],
+      'Cashier': [
+        'VIEW_INVENTORY', 'VIEW_SALES', 'CREATE_SALES',
+        'VIEW_PRESCRIPTIONS', 'VIEW_REPORTS'
+      ]
+    };
+
+    const userPrivileges = rolePrivileges[user.role] || [];
+    return userPrivileges.includes(privilegeCode);
   };
 
   const register = async (userData: any) => {
@@ -177,7 +214,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     isLoading,
     login,
     logout,
-    register
+    hasPrivilege
   };
 
   // Debug logging (commented out to reduce console noise)

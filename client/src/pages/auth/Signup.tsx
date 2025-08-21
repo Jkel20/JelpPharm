@@ -23,7 +23,6 @@ export const Signup: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const { register: authRegister } = useAuth();
 
   const {
     register,
@@ -51,8 +50,23 @@ export const Signup: React.FC = () => {
     console.log('Form data submitted:', data);
     try {
       setIsLoading(true);
-      await authRegister(data);
-      // Show success message instead of redirecting
+      
+      // Make direct API call to signup endpoint
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || 'Registration failed');
+      }
+
+      // Show success message
       setIsSubmitted(true);
     } catch (error: any) {
       console.error('Registration error:', error);

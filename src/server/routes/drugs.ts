@@ -2,7 +2,7 @@ import express from 'express';
 import { body, validationResult, query } from 'express-validator';
 import { Drug } from '../models/Drug';
 import { logger } from '../config/logger';
-import { auth, requirePharmacistOrHigher } from '../middleware/auth';
+import { auth, requirePrivilege } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
 
 const router = express.Router();
@@ -89,8 +89,8 @@ const validateDrugUpdate = [
 
 // @route   GET /api/drugs
 // @desc    Get all drugs with filtering and pagination
-// @access  Private
-router.get('/', auth, [
+// @access  Private - Requires VIEW_INVENTORY privilege
+router.get('/', auth, requirePrivilege('VIEW_INVENTORY'), [
   query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer'),
   query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100'),
   query('search').optional().trim().isLength({ min: 1 }).withMessage('Search term must not be empty'),
@@ -164,8 +164,8 @@ router.get('/', auth, [
 
 // @route   GET /api/drugs/:id
 // @desc    Get drug by ID
-// @access  Private
-router.get('/:id', auth, asyncHandler(async (req: express.Request, res: express.Response) => {
+// @access  Private - Requires VIEW_INVENTORY privilege
+router.get('/:id', auth, requirePrivilege('VIEW_INVENTORY'), asyncHandler(async (req: express.Request, res: express.Response) => {
   const drug = await Drug.findById(req.params['id']);
 
   if (!drug) {
@@ -183,8 +183,8 @@ router.get('/:id', auth, asyncHandler(async (req: express.Request, res: express.
 
 // @route   POST /api/drugs
 // @desc    Create new drug
-// @access  Private/Pharmacist+
-router.post('/', auth, requirePharmacistOrHigher, validateDrug, asyncHandler(async (req: express.Request, res: express.Response) => {
+// @access  Private - Requires MANAGE_INVENTORY privilege
+router.post('/', auth, requirePrivilege('MANAGE_INVENTORY'), validateDrug, asyncHandler(async (req: express.Request, res: express.Response) => {
   // Check for validation errors
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -226,8 +226,8 @@ router.post('/', auth, requirePharmacistOrHigher, validateDrug, asyncHandler(asy
 
 // @route   PUT /api/drugs/:id
 // @desc    Update drug
-// @access  Private/Pharmacist+
-router.put('/:id', auth, requirePharmacistOrHigher, validateDrugUpdate, asyncHandler(async (req: express.Request, res: express.Response) => {
+// @access  Private - Requires MANAGE_INVENTORY privilege
+router.put('/:id', auth, requirePrivilege('MANAGE_INVENTORY'), validateDrugUpdate, asyncHandler(async (req: express.Request, res: express.Response) => {
   // Check for validation errors
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -267,8 +267,8 @@ router.put('/:id', auth, requirePharmacistOrHigher, validateDrugUpdate, asyncHan
 
 // @route   DELETE /api/drugs/:id
 // @desc    Delete drug (soft delete)
-// @access  Private/Pharmacist+
-router.delete('/:id', auth, requirePharmacistOrHigher, asyncHandler(async (req: express.Request, res: express.Response) => {
+// @access  Private - Requires MANAGE_INVENTORY privilege
+router.delete('/:id', auth, requirePrivilege('MANAGE_INVENTORY'), asyncHandler(async (req: express.Request, res: express.Response) => {
   const drugId = req.params['id'];
 
   const drug = await Drug.findById(drugId);
@@ -293,8 +293,8 @@ router.delete('/:id', auth, requirePharmacistOrHigher, asyncHandler(async (req: 
 
 // @route   GET /api/drugs/search/suggestions
 // @desc    Get drug search suggestions
-// @access  Private
-router.get('/search/suggestions', auth, [
+// @access  Private - Requires VIEW_INVENTORY privilege
+router.get('/search/suggestions', auth, requirePrivilege('VIEW_INVENTORY'), [
   query('q').trim().isLength({ min: 1 }).withMessage('Search query is required')
 ], asyncHandler(async (req: express.Request, res: express.Response) => {
   // Check for validation errors

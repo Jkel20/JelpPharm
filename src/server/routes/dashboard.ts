@@ -33,7 +33,7 @@ interface Activity {
 }
 
 // Get dashboard statistics
-router.get('/stats', auth, async (req, res) => {
+router.get('/stats', auth, requirePrivilege('VIEW_REPORTS'), async (req, res) => {
   try {
     const today = new Date();
     const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
@@ -107,7 +107,7 @@ router.get('/stats', auth, async (req, res) => {
 });
 
 // Get low stock alerts
-router.get('/alerts', auth, async (req, res) => {
+router.get('/alerts', auth, requirePrivilege('VIEW_REPORTS'), async (req, res) => {
   try {
     // Get low stock inventory items with drug names
     const lowStockInventory = await Inventory.aggregate([
@@ -251,7 +251,7 @@ router.get('/alerts', auth, async (req, res) => {
 });
 
 // Get recent activities
-router.get('/recent-activities', auth, async (req, res) => {
+router.get('/recent-activities', auth, requirePrivilege('VIEW_REPORTS'), async (req, res) => {
   try {
     const activities: Activity[] = [];
 

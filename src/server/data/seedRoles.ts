@@ -229,9 +229,7 @@ export async function seedRolesAndPrivileges() {
           'VIEW_PRESCRIPTIONS',
           'VIEW_REPORTS'
         ].includes(p.code))
-        .map(p => p._id),
-      
-
+        .map(p => p._id)
     };
     
     // Create or update roles
@@ -276,6 +274,7 @@ export async function getRoleByCode(code: string) {
 // Function to check if user has privilege
 export async function userHasPrivilege(userId: string, privilegeCode: string): Promise<boolean> {
   try {
+    // Get the user with role and privileges populated
     const user = await mongoose.model('User').findById(userId).populate({
       path: 'roleId',
       populate: {
@@ -284,13 +283,22 @@ export async function userHasPrivilege(userId: string, privilegeCode: string): P
     });
     
     if (!user || !user.roleId) {
+      logger.warn(`User ${userId} not found or has no role assigned`);
       return false;
     }
     
     const role = user.roleId as any;
-    return role.privileges.some((privilege: any) => privilege.code === privilegeCode);
+    
+    // Check if role has the required privilege
+    const hasPrivilege = role.privileges.some((privilege: any) => privilege.code === privilegeCode);
+    
+    if (!hasPrivilege) {
+      logger.debug(`User ${userId} with role ${role.code} does not have privilege ${privilegeCode}`);
+    }
+    
+    return hasPrivilege;
   } catch (error) {
-    logger.error(`Error checking user privilege:`, error);
+    logger.error(`Error checking user privilege for user ${userId}:`, error);
     return false;
   }
 }

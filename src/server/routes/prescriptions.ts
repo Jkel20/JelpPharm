@@ -10,7 +10,7 @@ import { logger } from '../config/logger';
 const router = express.Router();
 
 // Get all prescriptions with pagination and filtering
-router.get('/', auth, asyncHandler(async (req: express.Request, res: express.Response) => {
+router.get('/', auth, requirePrivilege('VIEW_PRESCRIPTIONS'), asyncHandler(async (req: express.Request, res: express.Response) => {
   const { page = 1, limit = 10, search, status, patientId, doctorId } = req.query;
   const skip = (Number(page) - 1) * Number(limit);
   
@@ -52,7 +52,7 @@ router.get('/', auth, asyncHandler(async (req: express.Request, res: express.Res
 }));
 
 // Get single prescription
-router.get('/:id', auth, asyncHandler(async (req: express.Request, res: express.Response) => {
+router.get('/:id', auth, requirePrivilege('VIEW_PRESCRIPTIONS'), asyncHandler(async (req: express.Request, res: express.Response) => {
   const prescription = await Prescription.findById(req.params.id)
     .populate('patient', 'name phone email dateOfBirth gender address')
     .populate('doctor', 'name phone email specialization licenseNumber')

@@ -8,7 +8,7 @@ import { logger } from '../config/logger';
 const router = express.Router();
 
 // Get all inventory items with pagination and filtering
-router.get('/', auth, asyncHandler(async (req: express.Request, res: express.Response) => {
+router.get('/', auth, requirePrivilege('VIEW_INVENTORY'), asyncHandler(async (req: express.Request, res: express.Response) => {
   const { page = 1, limit = 10, search, category, status } = req.query;
   const skip = (Number(page) - 1) * Number(limit);
   
@@ -47,7 +47,7 @@ router.get('/', auth, asyncHandler(async (req: express.Request, res: express.Res
 }));
 
 // Get single inventory item
-router.get('/:id', auth, asyncHandler(async (req: express.Request, res: express.Response) => {
+router.get('/:id', auth, requirePrivilege('VIEW_INVENTORY'), asyncHandler(async (req: express.Request, res: express.Response) => {
   const inventory = await Inventory.findById(req.params.id)
     .populate('drug', 'name genericName brandName category strength form manufacturer')
     .populate('store', 'name location');

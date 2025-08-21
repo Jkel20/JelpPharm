@@ -11,7 +11,10 @@ import { Sales } from './pages/Sales';
 import { Prescriptions } from './pages/Prescriptions';
 import { Reports } from './pages/Reports';
 import { Settings } from './pages/Settings';
+import Unauthorized from './pages/Unauthorized';
 import MainLayout from './components/layout/MainLayout';
+import PrivilegeProtectedRoute from './components/auth/PrivilegeProtectedRoute';
+
 // Protected Route component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -29,8 +32,6 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
 };
 
-
-
 const App: React.FC = () => {
   return (
     <div className="App">
@@ -39,6 +40,8 @@ const App: React.FC = () => {
         <Route path="/signup" element={<Signup />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/unauthorized" element={<Unauthorized />} />
+        
         {/* General Dashboard */}
         <Route 
           path="/dashboard" 
@@ -51,98 +54,127 @@ const App: React.FC = () => {
           } 
         />
         
-        {/* Role-Based Dashboards */}
+        {/* Role-Based Dashboards with Privilege Protection */}
         <Route 
           path="/dashboard/admin" 
           element={
             <ProtectedRoute>
-              <MainLayout>
-                <Dashboard />
-              </MainLayout>
+              <PrivilegeProtectedRoute requiredPrivilege="SYSTEM_SETTINGS">
+                <MainLayout>
+                  <Dashboard />
+                </MainLayout>
+              </PrivilegeProtectedRoute>
             </ProtectedRoute>
           } 
         />
+        
         <Route 
           path="/dashboard/pharmacist" 
           element={
             <ProtectedRoute>
-              <MainLayout>
-                <Dashboard />
-              </MainLayout>
+              <PrivilegeProtectedRoute requiredPrivilege="MANAGE_PRESCRIPTIONS">
+                <MainLayout>
+                  <Dashboard />
+                </MainLayout>
+              </PrivilegeProtectedRoute>
             </ProtectedRoute>
           } 
         />
+        
         <Route 
           path="/dashboard/store-manager" 
           element={
             <ProtectedRoute>
-              <MainLayout>
-                <Dashboard />
-              </MainLayout>
+              <PrivilegeProtectedRoute requiredPrivilege="MANAGE_INVENTORY">
+                <MainLayout>
+                  <Dashboard />
+                </MainLayout>
+              </PrivilegeProtectedRoute>
             </ProtectedRoute>
           } 
         />
+        
         <Route 
           path="/dashboard/cashier" 
           element={
             <ProtectedRoute>
-              <MainLayout>
-                <Dashboard />
-              </MainLayout>
+              <PrivilegeProtectedRoute requiredPrivilege="CREATE_SALES">
+                <MainLayout>
+                  <Dashboard />
+                </MainLayout>
+              </PrivilegeProtectedRoute>
             </ProtectedRoute>
           } 
         />
+        
+        {/* Feature Routes with Privilege Protection */}
         <Route 
           path="/inventory" 
           element={
             <ProtectedRoute>
-              <MainLayout>
-                <Inventory />
-              </MainLayout>
+              <PrivilegeProtectedRoute requiredPrivilege="VIEW_INVENTORY">
+                <MainLayout>
+                  <Inventory />
+                </MainLayout>
+              </PrivilegeProtectedRoute>
             </ProtectedRoute>
           } 
         />
+        
         <Route 
           path="/sales" 
           element={
             <ProtectedRoute>
-              <MainLayout>
-                <Sales />
-              </MainLayout>
+              <PrivilegeProtectedRoute requiredPrivilege="VIEW_SALES">
+                <MainLayout>
+                  <Sales />
+                </MainLayout>
+              </PrivilegeProtectedRoute>
             </ProtectedRoute>
           } 
         />
+        
         <Route 
           path="/prescriptions" 
           element={
             <ProtectedRoute>
-              <MainLayout>
-                <Prescriptions />
-              </MainLayout>
+              <PrivilegeProtectedRoute requiredPrivilege="VIEW_PRESCRIPTIONS">
+                <MainLayout>
+                  <Prescriptions />
+                </MainLayout>
+              </PrivilegeProtectedRoute>
             </ProtectedRoute>
           } 
         />
+        
         <Route 
           path="/reports" 
           element={
             <ProtectedRoute>
-              <MainLayout>
-                <Reports />
-              </MainLayout>
+              <PrivilegeProtectedRoute requiredPrivilege="VIEW_REPORTS">
+                <MainLayout>
+                  <Reports />
+                </MainLayout>
+              </PrivilegeProtectedRoute>
             </ProtectedRoute>
           } 
         />
+        
         <Route 
           path="/settings" 
           element={
             <ProtectedRoute>
-              <MainLayout>
-                <Settings />
-              </MainLayout>
+              <PrivilegeProtectedRoute requiredPrivilege="SYSTEM_SETTINGS">
+                <MainLayout>
+                  <Settings />
+                </MainLayout>
+              </PrivilegeProtectedRoute>
             </ProtectedRoute>
           } 
         />
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        
+        {/* Catch-all route */}
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </div>
   );

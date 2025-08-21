@@ -47,7 +47,7 @@ const validateSignup = [
     .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
     .withMessage('Password must be at least 8 characters and contain uppercase, lowercase, digit, and special character'),
   body('role')
-    .isIn(['ADMINISTRATOR', 'PHARMACIST', 'STORE_MANAGER', 'CASHIER'])
+    .isIn(['Administrator', 'Pharmacist', 'Cashier', 'Store Manager'])
     .withMessage('Invalid role selected. Please select a valid role from the available options.'),
   body('storeId')
     .optional()
@@ -121,7 +121,7 @@ router.post('/signup', authLimiter, validateSignup, async (req: express.Request,
     let finalStoreId = storeId;
 
     // Handle store creation for non-administrators
-    if (role !== 'ADMINISTRATOR') {
+    if (role !== 'Administrator') {
       if (storeName && storeAddress) {
         // For now, we'll create a temporary store ID to satisfy the requirement
         // In a production system, you'd want to create the store first, then the user
@@ -137,7 +137,7 @@ router.post('/signup', authLimiter, validateSignup, async (req: express.Request,
     }
 
     // Validate store assignment for non-administrators
-    if (role !== 'ADMINISTRATOR' && finalStoreId && storeId) {
+    if (role !== 'Administrator' && finalStoreId && storeId) {
       // Only validate if a real storeId was provided (not a temporary one)
       const store = await Store.findById(finalStoreId);
       if (!store) {
@@ -162,7 +162,7 @@ router.post('/signup', authLimiter, validateSignup, async (req: express.Request,
       phone,
       password,
       roleId: roleDoc._id,
-      storeId: role === 'ADMINISTRATOR' ? undefined : finalStoreId
+      storeId: role === 'Administrator' ? undefined : finalStoreId
     });
 
     await user.save();
@@ -294,22 +294,22 @@ router.post('/login', authLimiter, validateLogin, async (req: express.Request, r
     let requiredPrivilege: string | null = null;
     
     switch (roleCode) {
-      case 'ADMINISTRATOR':
+      case 'Administrator':
         dashboardRoute = '/dashboard/admin';
         dashboardType = 'admin';
         requiredPrivilege = 'SYSTEM_SETTINGS';
         break;
-      case 'PHARMACIST':
+      case 'Pharmacist':
         dashboardRoute = '/dashboard/pharmacist';
         dashboardType = 'pharmacist';
         requiredPrivilege = 'MANAGE_PRESCRIPTIONS';
         break;
-      case 'STORE_MANAGER':
+      case 'Store Manager':
         dashboardRoute = '/dashboard/store-manager';
         dashboardType = 'store-manager';
         requiredPrivilege = 'MANAGE_INVENTORY';
         break;
-      case 'CASHIER':
+      case 'Cashier':
         dashboardRoute = '/dashboard/cashier';
         dashboardType = 'cashier';
         requiredPrivilege = 'CREATE_SALES';

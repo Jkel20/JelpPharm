@@ -81,8 +81,8 @@ router.get('/', auth, requirePrivilege('VIEW_USERS'), asyncHandler(async (_req: 
 
 // @route   GET /api/users/:id
 // @desc    Get user by ID
-// @access  Private
-router.get('/:id', auth, asyncHandler(async (req: express.Request, res: express.Response) => {
+// @access  Private - Requires VIEW_USERS privilege
+router.get('/:id', auth, requirePrivilege('VIEW_USERS'), asyncHandler(async (req: express.Request, res: express.Response) => {
   const user = await User.findById(req.params.id)
     .select('-password')
     .populate('storeId', 'name address.city address.region');
