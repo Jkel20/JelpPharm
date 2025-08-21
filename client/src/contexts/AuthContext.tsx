@@ -188,7 +188,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       ]
     };
 
-    const userPrivileges = rolePrivileges[user.role] || [];
+    // Normalize user role to match the privilege mapping
+    const normalizedRole = user.role === 'PHARMACIST' ? 'Pharmacist' : 
+                          user.role === 'STORE MANAGER' ? 'Store Manager' : 
+                          user.role === 'CASHIER' ? 'Cashier' : 
+                          user.role === 'ADMINISTRATOR' ? 'Administrator' : 
+                          user.role;
+    
+    const userPrivileges = rolePrivileges[normalizedRole] || [];
     return userPrivileges.includes(privilegeCode);
   };
 
