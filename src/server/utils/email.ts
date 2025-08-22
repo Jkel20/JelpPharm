@@ -3,6 +3,16 @@ import { logger } from '../config/logger';
 
 // Create transporter
 const createTransporter = () => {
+  // Check if email is properly configured
+  const isEmailConfigured = process.env.EMAIL_USER && 
+                           process.env.EMAIL_USER !== 'your-email@gmail.com' && 
+                           process.env.EMAIL_PASS && 
+                           process.env.EMAIL_PASS !== 'your-app-password';
+  
+  if (!isEmailConfigured) {
+    throw new Error('Email not configured');
+  }
+  
   return nodemailer.createTransport({
     host: process.env['EMAIL_HOST'],
     port: parseInt(process.env['EMAIL_PORT'] || '587'),

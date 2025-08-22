@@ -396,27 +396,26 @@ router.post('/forgot-password', authLimiter, validatePasswordReset, async (req: 
     } catch (emailError) {
       logger.error('Failed to send password reset email:', emailError);
       
-      // Check if this is a development environment with unconfigured email
-      const isDevelopment = process.env.NODE_ENV === 'development';
+      // Check if email is configured (works for both development and production)
       const isEmailConfigured = process.env.EMAIL_USER && 
                                process.env.EMAIL_USER !== 'your-email@gmail.com' && 
                                process.env.EMAIL_PASS && 
                                process.env.EMAIL_PASS !== 'your-app-password';
       
-      if (isDevelopment && !isEmailConfigured) {
-        // In development with unconfigured email, return the reset token for testing
-        logger.info('Development mode: Email not configured, returning reset token for testing');
+      if (!isEmailConfigured) {
+        // Email not configured, return the reset token for testing
+        logger.info('Email not configured, returning reset token for testing');
         return res.json({
           success: true,
-          message: 'Password reset token generated successfully (development mode)',
+          message: 'Password reset token generated successfully (email not configured)',
           development: {
             resetToken: resetToken,
-            resetUrl: `${process.env.CLIENT_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`,
-            note: 'Email not configured in development. Use the reset URL above to test password reset.'
+            resetUrl: `${process.env.CLIENT_URL || 'https://jelppharm-pms.onrender.com'}/reset-password?token=${resetToken}`,
+            note: 'Email not configured. Use the reset URL above to test password reset.'
           }
         });
       } else {
-        // Reset the token if email fails in production or with configured email
+        // Reset the token if email fails with configured email
         user.passwordResetToken = '';
         user.passwordResetExpires = new Date(0);
         await user.save();
