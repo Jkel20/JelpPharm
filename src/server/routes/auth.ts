@@ -4,6 +4,7 @@ import mongoose from 'mongoose';
 
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
+import bcrypt from 'bcryptjs';
 import { User } from '../models/User';
 import { Store } from '../models/Store';
 import { Role } from '../models/Role';
