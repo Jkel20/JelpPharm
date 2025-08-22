@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { PrivilegeProtectedRoute } from './components/auth/PrivilegeProtectedRoute';
@@ -8,6 +8,13 @@ import { Login } from './pages/auth/Login';
 import { Signup } from './pages/auth/Signup';
 import { Dashboard } from './pages/Dashboard';
 import { Unauthorized } from './pages/Unauthorized';
+import { Inventory } from './pages/Inventory';
+import { Sales } from './pages/Sales';
+import { Prescriptions } from './pages/Prescriptions';
+import { Reports } from './pages/Reports';
+import { Users } from './pages/Users';
+import { Stores } from './pages/Stores';
+import { Settings } from './pages/Settings';
 import ErrorBoundary from './components/ErrorBoundary';
 import NetworkStatus from './components/NetworkStatus';
 import './styles/globals.css';
@@ -17,90 +24,84 @@ function App() {
     <ErrorBoundary>
       <NetworkStatus />
       <AuthProvider>
-        <Router>
-          <div className="App min-h-screen bg-gray-50">
-            <Routes>
-              {/* Public Routes */}
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Signup />} />
-              <Route path="/unauthorized" element={<Unauthorized />} />
-              
-              {/* Protected Routes with Navigation */}
-              <Route path="/" element={
-                <ProtectedRoute>
-                  <Navigate to="/dashboard" replace />
-                </ProtectedRoute>
-              } />
-              
-              {/* Dashboard Routes */}
-              <Route path="/dashboard" element={
-                <ProtectedRoute>
-                  <div className="flex">
-                    <Navigation />
-                    <main className="flex-1 lg:ml-64">
-                      <Dashboard />
-                    </main>
-                  </div>
-                </ProtectedRoute>
-              } />
-              
-              {/* Role-based Dashboard Routes */}
-              <Route path="/admin" element={
-                <ProtectedRoute>
-                  <div className="flex">
-                    <Navigation />
-                    <main className="flex-1 lg:ml-64">
-                      <Dashboard />
-                    </main>
-                  </div>
-                </ProtectedRoute>
-              } />
-              
-              <Route path="/pharmacist" element={
-                <ProtectedRoute>
-                  <div className="flex">
-                    <Navigation />
-                    <main className="flex-1 lg:ml-64">
-                      <Dashboard />
-                    </main>
-                  </div>
-                </ProtectedRoute>
-              } />
-              
-              <Route path="/store-manager" element={
-                <ProtectedRoute>
-                  <div className="flex">
-                    <Navigation />
-                    <main className="flex-1 lg:ml-64">
-                      <Dashboard />
-                    </main>
-                  </div>
-                </ProtectedRoute>
-              } />
-              
-              <Route path="/cashier" element={
-                <ProtectedRoute>
-                  <div className="flex">
-                    <Navigation />
-                    <main className="flex-1 lg:ml-64">
-                      <Dashboard />
-                    </main>
-                  </div>
-                </ProtectedRoute>
-              } />
-              
-              {/* Feature Routes with Privilege Protection */}
-              <Route path="/inventory" element={
+        <div className="App min-h-screen bg-gray-50">
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/unauthorized" element={<Unauthorized />} />
+            
+            {/* Protected Routes with Navigation */}
+            <Route path="/" element={
+              <ProtectedRoute>
+                <Navigate to="/dashboard" replace />
+              </ProtectedRoute>
+            } />
+            
+            {/* Dashboard Routes */}
+            <Route path="/dashboard" element={
+              <ProtectedRoute>
+                <div className="flex">
+                  <Navigation />
+                  <main className="flex-1 lg:ml-64">
+                    <Dashboard />
+                  </main>
+                </div>
+              </ProtectedRoute>
+            } />
+            
+            {/* Role-based Dashboard Routes */}
+            <Route path="/admin" element={
+              <ProtectedRoute>
+                <div className="flex">
+                  <Navigation />
+                  <main className="flex-1 lg:ml-64">
+                    <Dashboard />
+                  </main>
+                </div>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/pharmacist" element={
+              <ProtectedRoute>
+                <div className="flex">
+                  <Navigation />
+                  <main className="flex-1 lg:ml-64">
+                    <Dashboard />
+                  </main>
+                </div>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/store-manager" element={
+              <ProtectedRoute>
+                <div className="flex">
+                  <Navigation />
+                  <main className="flex-1 lg:ml-64">
+                    <Dashboard />
+                  </main>
+                </div>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/cashier" element={
+              <ProtectedRoute>
+                <div className="flex">
+                  <Navigation />
+                  <main className="flex-1 lg:ml-64">
+                    <Dashboard />
+                  </main>
+                </div>
+              </ProtectedRoute>
+            } />
+            
+            {/* Feature Routes with Privilege Protection */}
+            <Route path="/inventory" element={
                 <PrivilegeProtectedRoute requiredPrivilege="VIEW_INVENTORY">
                   <div className="flex">
                     <Navigation />
-                    <main className="flex-1 lg:ml-64 p-8">
-                      <div className="max-w-7xl mx-auto">
-                        <h1 className="text-3xl font-bold text-gray-900 mb-6">Inventory Management</h1>
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-                          <p className="text-gray-600">Inventory management features coming soon...</p>
-                        </div>
-                      </div>
+                    <main className="flex-1 lg:ml-64">
+                      <Inventory />
                     </main>
                   </div>
                 </PrivilegeProtectedRoute>
@@ -110,13 +111,8 @@ function App() {
                 <PrivilegeProtectedRoute requiredPrivilege="VIEW_SALES">
                   <div className="flex">
                     <Navigation />
-                    <main className="flex-1 lg:ml-64 p-8">
-                      <div className="max-w-7xl mx-auto">
-                        <h1 className="text-3xl font-bold text-gray-900 mb-6">Sales Management</h1>
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-                          <p className="text-gray-600">Sales management features coming soon...</p>
-                        </div>
-                      </div>
+                    <main className="flex-1 lg:ml-64">
+                      <Sales />
                     </main>
                   </div>
                 </PrivilegeProtectedRoute>
@@ -126,13 +122,8 @@ function App() {
                 <PrivilegeProtectedRoute requiredPrivilege="VIEW_PRESCRIPTIONS">
                   <div className="flex">
                     <Navigation />
-                    <main className="flex-1 lg:ml-64 p-8">
-                      <div className="max-w-7xl mx-auto">
-                        <h1 className="text-3xl font-bold text-gray-900 mb-6">Prescription Management</h1>
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-                          <p className="text-gray-600">Prescription management features coming soon...</p>
-                        </div>
-                      </div>
+                    <main className="flex-1 lg:ml-64">
+                      <Prescriptions />
                     </main>
                   </div>
                 </PrivilegeProtectedRoute>
@@ -142,13 +133,8 @@ function App() {
                 <PrivilegeProtectedRoute requiredPrivilege="VIEW_REPORTS">
                   <div className="flex">
                     <Navigation />
-                    <main className="flex-1 lg:ml-64 p-8">
-                      <div className="max-w-7xl mx-auto">
-                        <h1 className="text-3xl font-bold text-gray-900 mb-6">Reports & Analytics</h1>
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-                          <p className="text-gray-600">Reports and analytics features coming soon...</p>
-                        </div>
-                      </div>
+                    <main className="flex-1 lg:ml-64">
+                      <Reports />
                     </main>
                   </div>
                 </PrivilegeProtectedRoute>
@@ -158,29 +144,19 @@ function App() {
                 <PrivilegeProtectedRoute requiredPrivilege="VIEW_USERS">
                   <div className="flex">
                     <Navigation />
-                    <main className="flex-1 lg:ml-64 p-8">
-                      <div className="max-w-7xl mx-auto">
-                        <h1 className="text-3xl font-bold text-gray-900 mb-6">User Management</h1>
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-                          <p className="text-gray-600">User management features coming soon...</p>
-                        </div>
-                      </div>
+                    <main className="flex-1 lg:ml-64">
+                      <Users />
                     </main>
                   </div>
                 </PrivilegeProtectedRoute>
               } />
               
               <Route path="/stores" element={
-                <PrivilegeProtectedRoute requiredPrivilege="SYSTEM_SETTINGS">
+                <PrivilegeProtectedRoute requiredPrivilege="VIEW_USERS">
                   <div className="flex">
                     <Navigation />
-                    <main className="flex-1 lg:ml-64 p-8">
-                      <div className="max-w-7xl mx-auto">
-                        <h1 className="text-3xl font-bold text-gray-900 mb-6">Store Management</h1>
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-                          <p className="text-gray-600">Store management features coming soon...</p>
-                        </div>
-                      </div>
+                    <main className="flex-1 lg:ml-64">
+                      <Stores />
                     </main>
                   </div>
                 </PrivilegeProtectedRoute>
@@ -191,13 +167,8 @@ function App() {
                 <ProtectedRoute>
                   <div className="flex">
                     <Navigation />
-                    <main className="flex-1 lg:ml-64 p-8">
-                      <div className="max-w-7xl mx-auto">
-                        <h1 className="text-3xl font-bold text-gray-900 mb-6">Settings</h1>
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-                          <p className="text-gray-600">Settings features coming soon...</p>
-                        </div>
-                      </div>
+                    <main className="flex-1 lg:ml-64">
+                      <Settings />
                     </main>
                   </div>
                 </ProtectedRoute>
@@ -207,8 +178,7 @@ function App() {
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Routes>
           </div>
-        </Router>
-      </AuthProvider>
+        </AuthProvider>
     </ErrorBoundary>
   );
 }

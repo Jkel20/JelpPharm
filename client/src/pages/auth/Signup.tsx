@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
+import { authAPI } from '../../services/api';
 
 interface SignupFormData {
   fullName: string;
@@ -87,21 +88,19 @@ export const Signup: React.FC = () => {
     try {
       setIsLoading(true);
       
-      // Make direct API call to signup endpoint
-      const response = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
+      // Use the authAPI service instead of direct fetch
+      const result = await authAPI.register({
+        fullName: data.fullName,
+        username: data.username,
+        email: data.email,
+        phone: data.phone,
+        password: data.password,
+        role: data.role,
+        storeName: data.storeName,
+        storeAddress: data.storeAddress
       });
 
-      const result = await response.json();
-      console.log('Signup API response:', { status: response.status, data: result });
-
-      if (!response.ok) {
-        throw new Error(result.message || `Registration failed (${response.status})`);
-      }
+      console.log('Signup API response:', result);
 
       // Show success message
       setIsSubmitted(true);

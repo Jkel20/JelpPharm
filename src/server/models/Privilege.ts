@@ -4,7 +4,7 @@ export interface IPrivilege extends Document {
   name: string;
   description: string;
   code: string;
-  category: 'user_management' | 'inventory' | 'sales' | 'prescriptions' | 'reports' | 'system';
+  category: 'user_management' | 'inventory' | 'sales' | 'prescriptions' | 'reports' | 'system' | 'store_management' | 'drug_management';
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -35,7 +35,7 @@ const privilegeSchema = new Schema<IPrivilege>({
     type: String,
     required: true,
     enum: {
-      values: ['user_management', 'inventory', 'sales', 'prescriptions', 'reports', 'system'],
+      values: ['user_management', 'inventory', 'sales', 'prescriptions', 'reports', 'system', 'store_management', 'drug_management'],
       message: 'Invalid privilege category'
     }
   },

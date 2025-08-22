@@ -1,9 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
-  BarChart3, 
-  TrendingUp, 
   Download, 
-  Calendar,
   Filter,
   DollarSign,
   Package,
@@ -11,7 +8,6 @@ import {
   ShoppingCart,
   FileText,
   Clock,
-  Mail,
   Settings
 } from 'lucide-react';
 import Button from '../components/ui/Button';
@@ -90,13 +86,6 @@ export const Reports: React.FC = () => {
 
   const generateMockReportData = (reportType: string, period: string) => {
     // Mock data generation based on report type and period
-    const baseData = {
-      'Date': '2024-01-15',
-      'Value': '₵1,250.00',
-      'Count': '45',
-      'Status': 'Completed'
-    };
-
     return Array.from({ length: 10 }, (_, i) => ({
       'Date': new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       'Value': `₵${Math.floor(Math.random() * 2000 + 500)}.00`,

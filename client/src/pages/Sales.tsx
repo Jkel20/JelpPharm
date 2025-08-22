@@ -7,11 +7,8 @@ import {
   Trash2, 
   Receipt,
   Download,
-  Calendar,
-  DollarSign,
   TrendingUp,
   Users,
-  Package,
   FileText
 } from 'lucide-react';
 import Button from '../components/ui/Button';

@@ -6,7 +6,6 @@ import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import { connectDB } from './config/database';
-import { logger } from './config/logger';
 import { seedRolesAndPrivileges } from './data/seedRoles';
 import authRoutes from './routes/auth';
 import userRoutes from './routes/users';
@@ -30,7 +29,7 @@ import path from 'path';
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 const app = express();
-const PORT = process.env['PORT'] || 10000;
+const PORT = process.env['PORT'] || 5000;
 
 // Trust proxy for rate limiting behind Render proxy
 app.set('trust proxy', 1);
@@ -41,9 +40,9 @@ app.use(cors({
   origin: process.env['NODE_ENV'] === 'production' 
     ? [
         process.env['CORS_ORIGIN'] || 'https://jelppharm-server.onrender.com',
-        /\.onrender\.com$/, // Allow all Render subdomains
-        /\.vercel\.app$/,   // Allow Vercel deployments
-        /\.netlify\.app$/   // Allow Netlify deployments
+        /\.onrender\.com$/,
+        /\.vercel\.app$/,
+        /\.netlify\.app$/
       ]
     : ['http://localhost:3000', 'http://localhost:5000'],
   credentials: true,
@@ -69,7 +68,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(compression());
 
 // Logging middleware
-app.use(morgan('combined', { stream: { write: (message) => logger.info(message.trim()) } }));
+app.use(morgan('combined', { stream: { write: (message) => console.log(message.trim()) } }));
 
 // Health check endpoint
 app.get('/health', (_req, res) => {
@@ -77,7 +76,16 @@ app.get('/health', (_req, res) => {
     status: 'OK', 
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
-    environment: process.env['NODE_ENV'] 
+    environment: process.env['NODE_ENV'],
+    mode: 'real-database-mode'
+  });
+});
+
+// Test endpoint for database connection
+app.get('/api/test', (_req, res) => {
+  res.status(200).json({ 
+    message: 'Server is running with real database connection',
+    timestamp: new Date().toISOString()
   });
 });
 
@@ -147,30 +155,36 @@ const startServer = async () => {
   try {
     // Connect to database
     await connectDB();
-    logger.info('Connected to MongoDB');
+    console.log('Connected to MongoDB');
 
     // Seed roles and privileges
     await seedRolesAndPrivileges();
-    logger.info('Roles and privileges seeded successfully');
+    console.log('Roles and privileges seeded successfully');
 
     // Start server
-    app.listen(PORT, () => {
+    const server = app.listen(PORT, () => {
       const isProduction = process.env['NODE_ENV'] === 'production';
       const serverUrl = isProduction 
-        ? (process.env['RENDER_EXTERNAL_URL'] || `http://localhost:${PORT}`)
+        ? `https://${process.env['CORS_ORIGIN'] || 'jelppharm-server.onrender.com'}`
         : `http://localhost:${PORT}`;
-      
-      logger.info(`Server running on port ${PORT} in ${process.env['NODE_ENV'] || 'development'} mode`);
-      logger.info(`Health check: ${serverUrl}/health`);
-      logger.info(`API base: ${serverUrl}/api`);
+        
+      // logger.info(`Server running on port ${PORT} in ${process.env['NODE_ENV'] || 'development'} mode`);
+      // logger.info(`Health check: ${serverUrl}/health`);
+      // logger.info(`API base: ${serverUrl}/api`);
+      console.log(`🚀 Server running on port ${PORT} in ${process.env['NODE_ENV'] || 'development'} mode`);
+      console.log(`🔍 Health check: ${serverUrl}/health`);
+      console.log(`📡 API base: ${serverUrl}/api`);
+      console.log(`🗄️ Running with REAL DATABASE connection to MongoDB Atlas`);
       
       if (isProduction) {
-        logger.info(`Production server accessible at: ${serverUrl}`);
-        logger.info(`CORS configured for: ${process.env['CORS_ORIGIN'] || 'Render domains'}`);
+        // logger.info(`Production server accessible at: ${serverUrl}`);
+        // logger.info(`CORS configured for: ${process.env['CORS_ORIGIN'] || 'Render domains'}`);
+        console.log(`🌐 Production server accessible at: ${serverUrl}`);
+        console.log(`🔒 CORS configured for: ${process.env['CORS_ORIGIN'] || 'Render domains'}`);
       }
     });
   } catch (error) {
-    logger.error('Failed to start server:', error);
+    // logger.error('Failed to start server:', error);
     process.exit(1);
   }
 };
@@ -179,12 +193,12 @@ startServer();
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
-  logger.info('SIGTERM received, shutting down gracefully');
+  // logger.info('SIGTERM received, shutting down gracefully');
   process.exit(0);
 });
 
 process.on('SIGINT', () => {
-  logger.info('SIGINT received, shutting down gracefully');
+  // logger.info('SIGINT received, shutting down gracefully');
   process.exit(0);
 });
 

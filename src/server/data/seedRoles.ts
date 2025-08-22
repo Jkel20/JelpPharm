@@ -105,6 +105,58 @@ const defaultPrivileges = [
     category: 'reports'
   },
   
+  // Store Management
+  {
+    name: 'View Stores',
+    description: 'Can view store information and lists',
+    code: 'VIEW_STORES',
+    category: 'store_management'
+  },
+  {
+    name: 'Create Stores',
+    description: 'Can create new stores in the system',
+    code: 'CREATE_STORES',
+    category: 'store_management'
+  },
+  {
+    name: 'Edit Stores',
+    description: 'Can modify existing store information',
+    code: 'EDIT_STORES',
+    category: 'store_management'
+  },
+  {
+    name: 'Delete Stores',
+    description: 'Can remove stores from the system',
+    code: 'DELETE_STORES',
+    category: 'store_management'
+  },
+  
+  // Drug Management
+  {
+    name: 'View Drugs',
+    description: 'Can view drug information and lists',
+    code: 'VIEW_DRUGS',
+    category: 'drug_management'
+  },
+  {
+    name: 'Create Drugs',
+    description: 'Can create new drugs in the system',
+    code: 'CREATE_DRUGS',
+    category: 'drug_management'
+  },
+  {
+    name: 'Edit Drugs',
+    description: 'Can modify existing drug information',
+    code: 'EDIT_DRUGS',
+    category: 'drug_management'
+  },
+  {
+    name: 'Delete Drugs',
+    description: 'Can remove drugs from the system',
+    code: 'DELETE_DRUGS',
+    category: 'drug_management'
+  },
+  
   // System
   {
     name: 'System Settings',
@@ -198,7 +250,11 @@ export async function seedRolesAndPrivileges() {
           'MANAGE_PRESCRIPTIONS',
           'DISPENSE_MEDICATIONS',
           'VIEW_REPORTS',
-          'GENERATE_REPORTS'
+          'GENERATE_REPORTS',
+          'VIEW_STORES',
+          'VIEW_DRUGS',
+          'CREATE_DRUGS',
+          'EDIT_DRUGS'
         ].includes(p.code))
         .map(p => p._id),
       
@@ -217,7 +273,13 @@ export async function seedRolesAndPrivileges() {
           'MANAGE_PRESCRIPTIONS',
           'DISPENSE_MEDICATIONS',
           'VIEW_REPORTS',
-          'GENERATE_REPORTS'
+          'GENERATE_REPORTS',
+          'VIEW_STORES',
+          'CREATE_STORES',
+          'EDIT_STORES',
+          'VIEW_DRUGS',
+          'CREATE_DRUGS',
+          'EDIT_DRUGS'
         ].includes(p.code))
         .map(p => p._id),
       
@@ -227,7 +289,9 @@ export async function seedRolesAndPrivileges() {
           'VIEW_SALES',
           'CREATE_SALES',
           'VIEW_PRESCRIPTIONS',
-          'VIEW_REPORTS'
+          'VIEW_REPORTS',
+          'VIEW_STORES',
+          'VIEW_DRUGS'
         ].includes(p.code))
         .map(p => p._id)
     };

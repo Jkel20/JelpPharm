@@ -1,20 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  FileText, 
   Search, 
   Plus, 
   Eye, 
   Edit, 
   Trash2, 
-  User,
-  Calendar,
-  Clock,
-  AlertTriangle,
-  CheckCircle,
-  XCircle,
   Download,
-  Save,
-  Pill
+  Save
 } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';

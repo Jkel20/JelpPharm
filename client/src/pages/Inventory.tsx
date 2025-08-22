@@ -1,20 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Package, 
   AlertTriangle, 
-  Clock, 
   Search, 
-  Filter, 
   Plus, 
   Download,
   Eye,
   Edit,
-  Trash2,
-  TrendingDown,
-  Calendar,
-  DollarSign,
-  BarChart3,
-  FileText
+  Trash2
 } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
@@ -73,7 +65,7 @@ export const Inventory: React.FC = () => {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [selectedAlertType, setSelectedAlertType] = useState('all');
+
   const [isLoading, setIsLoading] = useState(true);
   const [showAddDrug, setShowAddDrug] = useState(false);
   const [selectedDrug, setSelectedDrug] = useState<Drug | null>(null);
@@ -289,65 +281,6 @@ export const Inventory: React.FC = () => {
     return matchesSearch && matchesCategory;
   });
 
-  const filteredAlerts = alerts.filter(alert => {
-    return selectedAlertType === 'all' || alert.type === selectedAlertType;
-  });
-
-  const getAlertIcon = (type: string) => {
-    switch (type) {
-      case 'low_stock':
-        return <TrendingDown className="w-5 h-5 text-red-500" />;
-      case 'expiring_soon':
-        return <Clock className="w-5 h-5 text-yellow-500" />;
-      case 'expired':
-        return <AlertTriangle className="w-5 h-5 text-red-600" />;
-      default:
-        return <AlertTriangle className="w-5 h-5 text-gray-500" />;
-    }
-  };
-
-  const getAlertColor = (severity: string) => {
-    switch (severity) {
-      case 'critical':
-        return 'bg-red-50 border-red-200';
-      case 'high':
-        return 'bg-orange-50 border-orange-200';
-      case 'medium':
-        return 'bg-yellow-50 border-yellow-200';
-      case 'low':
-        return 'bg-blue-50 border-blue-200';
-      default:
-        return 'bg-gray-50 border-gray-200';
-    }
-  };
-
-  const getStockStatus = (currentStock: number, reorderLevel: number) => {
-    if (currentStock === 0) return { status: 'Out of Stock', color: 'text-red-600 bg-red-100' };
-    if (currentStock <= reorderLevel) return { status: 'Low Stock', color: 'text-orange-600 bg-orange-100' };
-    if (currentStock <= reorderLevel * 1.5) return { status: 'Moderate', color: 'text-yellow-600 bg-yellow-100' };
-    return { status: 'In Stock', color: 'text-green-600 bg-green-100' };
-  };
-
-  const calculateDaysUntilExpiry = (expiryDate: string) => {
-    const today = new Date();
-    const expiry = new Date(expiryDate);
-    const diffTime = expiry.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
-  };
-
-  const getExpiryStatus = (expiryDate: string) => {
-    const daysUntilExpiry = calculateDaysUntilExpiry(expiryDate);
-    if (daysUntilExpiry < 0) return { status: 'Expired', color: 'text-red-600 bg-red-100' };
-    if (daysUntilExpiry <= 30) return { status: 'Expires Soon', color: 'text-red-600 bg-red-100' };
-    if (daysUntilExpiry <= 90) return { status: 'Expires Soon', color: 'text-yellow-600 bg-yellow-100' };
-    if (daysUntilExpiry <= 180) return { status: 'Expires Soon', color: 'text-orange-600 bg-orange-100' };
-    return { status: 'Valid', color: 'text-green-600 bg-green-100' };
-  };
-
-  const totalInventoryValue = drugs.reduce((sum, drug) => sum + (drug.currentStock * drug.costPrice), 0);
-  const totalRetailValue = drugs.reduce((sum, drug) => sum + (drug.currentStock * drug.unitPrice), 0);
-
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
@@ -436,7 +369,7 @@ export const Inventory: React.FC = () => {
         </div>
 
           {/* Alerts Section */}
-        {filteredAlerts.length > 0 && (
+        {alerts.length > 0 && (
           <div className="mb-8">
             <Card className="bg-gradient-to-r from-red-50/90 to-orange-50/90 backdrop-blur-sm border-red-200 shadow-lg">
               <CardHeader className="bg-gradient-to-r from-red-100/80 to-orange-100/80 backdrop-blur-sm border-b border-red-200">
@@ -447,7 +380,7 @@ export const Inventory: React.FC = () => {
               </CardHeader>
               <CardContent className="p-0">
                 <div className="divide-y divide-red-100">
-                  {filteredAlerts.map((alert) => (
+                  {alerts.map((alert) => (
                     <div key={alert.id} className="p-4 hover:bg-red-50/50 transition-colors">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center">
