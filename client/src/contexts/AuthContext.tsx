@@ -25,7 +25,7 @@ interface AuthContextType {
   login: (identifier: string, password: string) => Promise<void>;
   logout: () => void;
   hasPrivilege: (privilegeCode: string) => boolean;
-  forgotPassword: (email: string) => Promise<void>;
+  forgotPassword: (email: string) => Promise<any>;
   resetPassword: (token: string, password: string) => Promise<void>;
 }
 
@@ -177,6 +177,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (data.success) {
         console.log('AuthContext: Password reset email sent successfully');
+        return data; // Return the response data for development mode
       } else {
         throw new Error(data.message || 'Failed to send password reset email');
       }

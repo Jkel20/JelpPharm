@@ -14,6 +14,7 @@ interface ForgotPasswordFormData {
 export const ForgotPassword: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [developmentInfo, setDevelopmentInfo] = useState<any>(null);
   const { forgotPassword } = useAuth();
 
   const {
@@ -30,7 +31,13 @@ export const ForgotPassword: React.FC = () => {
   const onSubmit = async (data: ForgotPasswordFormData) => {
     try {
       setIsLoading(true);
-      await forgotPassword(data.email);
+      const response = await forgotPassword(data.email);
+      
+      // Check if this is a development response with reset token
+      if (response && response.development) {
+        setDevelopmentInfo(response.development);
+      }
+      
       setIsSubmitted(true);
     } catch (error: any) {
       setError('root', {
@@ -63,6 +70,30 @@ export const ForgotPassword: React.FC = () => {
               <p className="text-gray-600 mb-4">
                 We've sent a password reset link to your email address. Please check your inbox and follow the instructions to reset your password.
               </p>
+              
+              {/* Development Mode Information */}
+              {developmentInfo && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-left mb-4">
+                  <p className="text-sm text-blue-800 font-semibold mb-2">
+                    🧪 Development Mode - Email Not Configured
+                  </p>
+                  <p className="text-sm text-blue-700 mb-3">
+                    {developmentInfo.note}
+                  </p>
+                  <div className="bg-white border border-blue-300 rounded p-3">
+                    <p className="text-xs text-blue-600 font-medium mb-1">Reset URL:</p>
+                    <a 
+                      href={developmentInfo.resetUrl} 
+                      className="text-xs text-blue-500 hover:text-blue-700 break-all"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {developmentInfo.resetUrl}
+                    </a>
+                  </div>
+                </div>
+              )}
+              
               <div className="bg-gray-50 rounded-lg p-4 text-left">
                 <p className="text-sm text-gray-600">
                   <strong>Didn't receive the email?</strong>
