@@ -384,10 +384,14 @@ router.post('/forgot-password', authLimiter, validatePasswordReset, async (req: 
     const resetToken = crypto.randomBytes(32).toString('hex');
     const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
-    // Save reset token to user
-    user.passwordResetToken = resetToken;
-    user.passwordResetExpires = resetTokenExpiry;
-    await user.save();
+    // Save reset token to user using updateOne to avoid validation issues
+    await User.updateOne(
+      { _id: user._id },
+      { 
+        passwordResetToken: resetToken,
+        passwordResetExpires: resetTokenExpiry
+      }
+    );
 
     // Send reset email
     try {
@@ -421,9 +425,13 @@ router.post('/forgot-password', authLimiter, validatePasswordReset, async (req: 
         });
       } else {
         // Reset the token if email fails with configured email
-        user.passwordResetToken = '';
-        user.passwordResetExpires = new Date(0);
-        await user.save();
+        await User.updateOne(
+          { _id: user._id },
+          { 
+            passwordResetToken: '',
+            passwordResetExpires: new Date(0)
+          }
+        );
         
         return res.status(500).json({
           success: false,
@@ -475,11 +483,19 @@ router.post('/reset-password', authLimiter, validateNewPassword, async (req: exp
       });
     }
 
-    // Update password
-    user.password = password;
-    user.passwordResetToken = '';
-    user.passwordResetExpires = new Date(0);
-    await user.save();
+    // Hash the new password
+    const saltRounds = 12;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    
+    // Update password using updateOne to avoid validation issues
+    await User.updateOne(
+      { _id: user._id },
+      { 
+        password: hashedPassword,
+        passwordResetToken: '',
+        passwordResetExpires: new Date(0)
+      }
+    );
 
     // Log the password reset
     logger.info(`Password reset successful for user: ${user.email}`);
