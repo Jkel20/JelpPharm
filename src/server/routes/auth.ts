@@ -397,10 +397,15 @@ router.post('/forgot-password', authLimiter, validatePasswordReset, async (req: 
       logger.error('Failed to send password reset email:', emailError);
       
       // Check if email is configured (works for both development and production)
-      const isEmailConfigured = process.env.EMAIL_USER && 
-                               process.env.EMAIL_USER !== 'your-email@gmail.com' && 
-                               process.env.EMAIL_PASS && 
-                               process.env.EMAIL_PASS !== 'your-app-password';
+      const emailUser = process.env.EMAIL_USER || '';
+      const emailPass = process.env.EMAIL_PASS || '';
+      const emailHost = process.env.EMAIL_HOST || '';
+      
+      const isEmailConfigured = emailUser && 
+                               emailUser !== 'your-email@gmail.com' && 
+                               emailPass && 
+                               emailPass !== 'your-app-password' &&
+                               emailHost;
       
       if (!isEmailConfigured) {
         // Email not configured, return the reset token for testing
