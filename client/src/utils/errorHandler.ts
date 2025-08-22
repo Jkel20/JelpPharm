@@ -139,7 +139,7 @@ export const getRetryDelay = (error: AppError, attempt: number): number => {
   return 1000; // Default 1 second delay
 };
 
-export default {
+const errorHandler = {
   AppError,
   ERROR_CODES,
   ERROR_MESSAGES,
@@ -149,3 +149,5 @@ export default {
   isRetryableError,
   getRetryDelay,
 };
+
+export default errorHandler;
