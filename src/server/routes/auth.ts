@@ -649,19 +649,19 @@ router.get('/my-dashboard', auth, async (req: express.Request, res: express.Resp
     if (user.roleId) {
       const role = user.roleId as any;
       
-      if (role.code === 'ADMINISTRATOR') {
+      if (role.code === 'Administrator') {
         dashboardType = 'admin';
         dashboardEndpoint = '/api/dashboard/admin';
         requiredPrivilege = 'SYSTEM_SETTINGS';
-      } else if (role.code === 'PHARMACIST') {
+      } else if (role.code === 'Pharmacist') {
         dashboardType = 'pharmacist';
         dashboardEndpoint = '/api/dashboard/pharmacist';
         requiredPrivilege = 'MANAGE_PRESCRIPTIONS';
-      } else if (role.code === 'STORE_MANAGER') {
+      } else if (role.code === 'Store Manager') {
         dashboardType = 'store-manager';
         dashboardEndpoint = '/api/dashboard/store-manager';
         requiredPrivilege = 'MANAGE_INVENTORY';
-      } else if (role.code === 'CASHIER') {
+      } else if (role.code === 'Cashier') {
         dashboardType = 'cashier';
         dashboardEndpoint = '/api/dashboard/cashier';
         requiredPrivilege = 'CREATE_SALES';
