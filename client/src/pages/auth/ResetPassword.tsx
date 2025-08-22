@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { Eye, EyeOff, Lock, CheckCircle } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
 import Button from '../../components/ui/Button';
 
 import { Card } from '../../components/ui/Card';
@@ -17,6 +18,7 @@ export const ResetPassword: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const { resetPassword } = useAuth();
   
   // Get token from URL params (sent via email)
   const token = searchParams.get('token');
@@ -42,12 +44,7 @@ export const ResetPassword: React.FC = () => {
 
     try {
       setIsLoading(true);
-      // TODO: Implement actual password reset API call
-      // await resetPassword(token, data.password);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
+      await resetPassword(token, data.password);
       setIsSubmitted(true);
     } catch (error: any) {
       setError('root', {

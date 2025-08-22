@@ -6,6 +6,8 @@ import { PrivilegeProtectedRoute } from './components/auth/PrivilegeProtectedRou
 import { Navigation } from './components/layout/Navigation';
 import { Login } from './pages/auth/Login';
 import { Signup } from './pages/auth/Signup';
+import { ForgotPassword } from './pages/auth/ForgotPassword';
+import { ResetPassword } from './pages/auth/ResetPassword';
 import { Dashboard } from './pages/Dashboard';
 import { Unauthorized } from './pages/Unauthorized';
 import { Inventory } from './pages/Inventory';
@@ -29,6 +31,8 @@ function App() {
             {/* Public Routes */}
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/unauthorized" element={<Unauthorized />} />
             
             {/* Protected Routes with Navigation */}

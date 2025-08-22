@@ -14,7 +14,7 @@ interface ForgotPasswordFormData {
 export const ForgotPassword: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  // We'll add forgotPassword method to AuthContext later
+  const { forgotPassword } = useAuth();
 
   const {
     register,
@@ -30,9 +30,7 @@ export const ForgotPassword: React.FC = () => {
   const onSubmit = async (data: ForgotPasswordFormData) => {
     try {
       setIsLoading(true);
-      // TODO: Implement actual forgot password API call
-      // For now, simulate the API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await forgotPassword(data.email);
       setIsSubmitted(true);
     } catch (error: any) {
       setError('root', {

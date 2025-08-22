@@ -25,6 +25,8 @@ interface AuthContextType {
   login: (identifier: string, password: string) => Promise<void>;
   logout: () => void;
   hasPrivilege: (privilegeCode: string) => boolean;
+  forgotPassword: (email: string) => Promise<void>;
+  resetPassword: (token: string, password: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -156,6 +158,62 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     console.log('AuthContext: User logged out');
   };
 
+  const forgotPassword = async (email: string) => {
+    try {
+      console.log('AuthContext: Starting forgot password process...');
+      const response = await fetch(`${buildApiUrl('/auth/forgot-password')}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to send password reset email');
+      }
+
+      if (data.success) {
+        console.log('AuthContext: Password reset email sent successfully');
+      } else {
+        throw new Error(data.message || 'Failed to send password reset email');
+      }
+    } catch (error) {
+      console.error('AuthContext: Forgot password error:', error);
+      throw error;
+    }
+  };
+
+  const resetPassword = async (token: string, password: string) => {
+    try {
+      console.log('AuthContext: Starting password reset process...');
+      const response = await fetch(`${buildApiUrl('/auth/reset-password')}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to reset password');
+      }
+
+      if (data.success) {
+        console.log('AuthContext: Password reset successful');
+      } else {
+        throw new Error(data.message || 'Failed to reset password');
+      }
+    } catch (error) {
+      console.error('AuthContext: Reset password error:', error);
+      throw error;
+    }
+  };
+
   // Check if user has a specific privilege based on their role
   const hasPrivilege = (privilegeCode: string): boolean => {
     if (!user) return false;
@@ -206,7 +264,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     isLoading,
     login,
     logout,
-    hasPrivilege
+    hasPrivilege,
+    forgotPassword,
+    resetPassword
   };
 
   // Debug logging (commented out to reduce console noise)
