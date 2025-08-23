@@ -11,7 +11,7 @@
     "build:server": "tsc -p tsconfig.server.json",
     "build:client": "cd client && npm run build:prod",
     "start": "node dist/server/index.js",
-    "render-build": "npm ci && npm run build:server && npm run build:client",
+    "render-build": "npm ci && npm run build:server && cd client && npm ci && npm run build",
     "postinstall": "npm run build:server",
     "test": "jest",
     "lint": "eslint src/**/*.ts client/src/**/*.tsx",

@@ -3,7 +3,7 @@ services:
     name: jelppharm-pms
     env: node
     plan: free
-    buildCommand: chmod +x build.sh && ./build.sh
+    buildCommand: npm run render-build
     startCommand: npm start
     envVars:
       - key: NODE_ENV

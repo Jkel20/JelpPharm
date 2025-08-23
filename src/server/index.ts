@@ -105,7 +105,16 @@ app.use('/api/roles', roleRoutes);
 app.use('/api/privileges', privilegeRoutes);
 
 // Serve static files from React build (must come before catch-all handler)
-app.use('/static', express.static(path.join(__dirname, '../../client/build/static'), {
+const clientBuildPath = path.join(__dirname, '../../client/build');
+const staticPath = path.join(clientBuildPath, 'static');
+
+// Check if client build exists
+if (!require('fs').existsSync(clientBuildPath)) {
+  console.error('❌ Client build directory not found:', clientBuildPath);
+  console.error('   Please ensure the client build process completed successfully');
+}
+
+app.use('/static', express.static(staticPath, {
   setHeaders: (res, path) => {
     if (path.endsWith('.css')) {
       res.setHeader('Content-Type', 'text/css');
@@ -117,13 +126,18 @@ app.use('/static', express.static(path.join(__dirname, '../../client/build/stati
 
 // Serve manifest.json with proper headers
 app.get('/manifest.json', (req, res) => {
-  res.setHeader('Content-Type', 'application/manifest+json');
-  res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
-  res.sendFile(path.join(__dirname, '../../client/build/manifest.json'));
+  const manifestPath = path.join(clientBuildPath, 'manifest.json');
+  if (require('fs').existsSync(manifestPath)) {
+    res.setHeader('Content-Type', 'application/manifest+json');
+    res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+    res.sendFile(manifestPath);
+  } else {
+    res.status(404).json({ error: 'Manifest file not found' });
+  }
 });
 
 // Serve other static files
-app.use(express.static(path.join(__dirname, '../../client/build')));
+app.use(express.static(clientBuildPath));
 
 // Catch-all handler: send back React's index.html file for any non-API routes
 app.get('*', (req, res) => {
@@ -138,12 +152,21 @@ app.get('*', (req, res) => {
   }
   
   // For all other routes, serve the React app
-  res.sendFile(path.join(__dirname, '../../client/build/index.html'), (err) => {
-    if (err) {
-      console.error('Error serving index.html:', err);
-      res.status(500).json({ error: 'Failed to serve application' });
-    }
-  });
+  const indexPath = path.join(clientBuildPath, 'index.html');
+  if (require('fs').existsSync(indexPath)) {
+    res.sendFile(indexPath, (err) => {
+      if (err) {
+        console.error('Error serving index.html:', err);
+        res.status(500).json({ error: 'Failed to serve application' });
+      }
+    });
+  } else {
+    console.error('❌ index.html not found:', indexPath);
+    res.status(500).json({ 
+      error: 'Application not built properly',
+      message: 'The React application build is missing. Please check the build process.'
+    });
+  }
 });
 
 // Error handling middleware
@@ -165,22 +188,17 @@ const startServer = async () => {
     const server = app.listen(PORT, () => {
       const isProduction = process.env['NODE_ENV'] === 'production';
       const serverUrl = isProduction 
-        ? `https://${process.env['CORS_ORIGIN'] || 'jelppharm-server.onrender.com'}`
+        ? `https://jelppharm-pms.onrender.com`
         : `http://localhost:${PORT}`;
         
-      // logger.info(`Server running on port ${PORT} in ${process.env['NODE_ENV'] || 'development'} mode`);
-      // logger.info(`Health check: ${serverUrl}/health`);
-      // logger.info(`API base: ${serverUrl}/api`);
       console.log(`🚀 Server running on port ${PORT} in ${process.env['NODE_ENV'] || 'development'} mode`);
       console.log(`🔍 Health check: ${serverUrl}/health`);
       console.log(`📡 API base: ${serverUrl}/api`);
       console.log(`🗄️ Running with REAL DATABASE connection to MongoDB Atlas`);
       
       if (isProduction) {
-        // logger.info(`Production server accessible at: ${serverUrl}`);
-        // logger.info(`CORS configured for: ${process.env['CORS_ORIGIN'] || 'Render domains'}`);
         console.log(`🌐 Production server accessible at: ${serverUrl}`);
-        console.log(`🔒 CORS configured for: ${process.env['CORS_ORIGIN'] || 'Render domains'}`);
+        console.log(`🔒 CORS configured for: ${process.env['CORS_ORIGIN'] || 'jelppharm-pms.onrender.com'}`);
       }
     });
   } catch (error) {
