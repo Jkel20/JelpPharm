@@ -66,7 +66,29 @@ function App() {
               </ProtectedRoute>
             } />
             
+            <Route path="/dashboard/admin" element={
+              <ProtectedRoute>
+                <div className="flex">
+                  <Navigation />
+                  <main className="flex-1 lg:ml-64">
+                    <Dashboard />
+                  </main>
+                </div>
+              </ProtectedRoute>
+            } />
+            
             <Route path="/pharmacist" element={
+              <ProtectedRoute>
+                <div className="flex">
+                  <Navigation />
+                  <main className="flex-1 lg:ml-64">
+                    <Dashboard />
+                  </main>
+                </div>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/dashboard/pharmacist" element={
               <ProtectedRoute>
                 <div className="flex">
                   <Navigation />
@@ -88,7 +110,29 @@ function App() {
               </ProtectedRoute>
             } />
             
+            <Route path="/dashboard/store-manager" element={
+              <ProtectedRoute>
+                <div className="flex">
+                  <Navigation />
+                  <main className="flex-1 lg:ml-64">
+                    <Dashboard />
+                  </main>
+                </div>
+              </ProtectedRoute>
+            } />
+            
             <Route path="/cashier" element={
+              <ProtectedRoute>
+                <div className="flex">
+                  <Navigation />
+                  <main className="flex-1 lg:ml-64">
+                    <Dashboard />
+                  </main>
+                </div>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/dashboard/cashier" element={
               <ProtectedRoute>
                 <div className="flex">
                   <Navigation />
