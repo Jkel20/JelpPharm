@@ -31,17 +31,25 @@ export const QuickAction: React.FC<QuickActionProps> = ({
         bg: gradients.blue['500-to-600'], 
         border: 'group-hover:border-blue-500' 
       },
-      'from-green-500 to-emerald-600': { 
+      'from-green-500 to-green-600': { 
+        bg: gradients.green['500-to-600'], 
+        border: 'group-hover:border-green-500' 
+      },
+      'from-emerald-500 to-emerald-600': { 
         bg: gradients.green['500-to-emerald-600'], 
         border: 'group-hover:border-emerald-500' 
       },
-      'from-purple-500 to-violet-600': { 
-        bg: gradients.purple['500-to-violet-600'], 
-        border: 'group-hover:border-violet-500' 
+      'from-purple-500 to-purple-600': { 
+        bg: gradients.purple['500-to-600'], 
+        border: 'group-hover:border-purple-500' 
       },
-      'from-orange-500 to-red-600': { 
-        bg: gradients.orange['500-to-red-600'], 
-        border: 'group-hover:border-red-500' 
+      'from-orange-500 to-orange-600': { 
+        bg: gradients.orange['500-to-600'], 
+        border: 'group-hover:border-orange-500' 
+      },
+      'from-indigo-500 to-indigo-600': { 
+        bg: 'bg-gradient-to-r from-indigo-500 to-indigo-600', 
+        border: 'group-hover:border-indigo-500' 
       }
     };
     

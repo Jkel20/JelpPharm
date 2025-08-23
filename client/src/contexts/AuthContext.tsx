@@ -219,42 +219,41 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const hasPrivilege = (privilegeCode: string): boolean => {
     if (!user) return false;
 
-    // Define privilege mappings for each role
+    // Define privilege mappings for each role using role codes (as sent by backend)
     const rolePrivileges: Record<string, string[]> = {
-      'Administrator': [
+      'ADMINISTRATOR': [
         'VIEW_USERS', 'CREATE_USERS', 'EDIT_USERS', 'DELETE_USERS',
         'VIEW_INVENTORY', 'MANAGE_INVENTORY', 'ADJUST_STOCK',
         'VIEW_SALES', 'CREATE_SALES', 'MANAGE_SALES',
         'VIEW_PRESCRIPTIONS', 'MANAGE_PRESCRIPTIONS', 'DISPENSE_MEDICATIONS',
         'VIEW_REPORTS', 'GENERATE_REPORTS', 'SYSTEM_SETTINGS', 'DATABASE_MANAGEMENT'
       ],
-      'Pharmacist': [
+      'PHARMACIST': [
         'VIEW_USERS', 'VIEW_INVENTORY', 'MANAGE_INVENTORY', 'ADJUST_STOCK',
         'VIEW_SALES', 'CREATE_SALES', 'MANAGE_SALES',
         'VIEW_PRESCRIPTIONS', 'MANAGE_PRESCRIPTIONS', 'DISPENSE_MEDICATIONS',
         'VIEW_REPORTS', 'GENERATE_REPORTS'
       ],
-      'Store Manager': [
+      'STORE_MANAGER': [
         'VIEW_USERS', 'CREATE_USERS', 'EDIT_USERS',
         'VIEW_INVENTORY', 'MANAGE_INVENTORY', 'ADJUST_STOCK',
         'VIEW_SALES', 'CREATE_SALES', 'MANAGE_SALES',
         'VIEW_PRESCRIPTIONS', 'MANAGE_PRESCRIPTIONS', 'DISPENSE_MEDICATIONS',
         'VIEW_REPORTS', 'GENERATE_REPORTS'
       ],
-      'Cashier': [
+      'CASHIER': [
         'VIEW_INVENTORY', 'VIEW_SALES', 'CREATE_SALES',
         'VIEW_PRESCRIPTIONS', 'VIEW_REPORTS'
       ]
     };
-
-    // Normalize user role to match the privilege mapping
-    const normalizedRole = user.role === 'PHARMACIST' ? 'Pharmacist' : 
-                          user.role === 'STORE MANAGER' ? 'Store Manager' : 
-                          user.role === 'CASHIER' ? 'Cashier' : 
-                          user.role === 'ADMINISTRATOR' ? 'Administrator' : 
-                          user.role;
     
-    const userPrivileges = rolePrivileges[normalizedRole] || [];
+    const userPrivileges = rolePrivileges[user.role] || [];
+    console.log('hasPrivilege Debug:', {
+      userRole: user.role,
+      privilegeCode,
+      userPrivileges,
+      hasPrivilege: userPrivileges.includes(privilegeCode)
+    });
     return userPrivileges.includes(privilegeCode);
   };
 

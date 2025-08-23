@@ -193,7 +193,7 @@ curl https://jelppharm-pms.onrender.com/health
 ## 📱 **Mobile Access**
 
 Your deployed system is fully responsive and works on:
-- ✅ **Desktop Computers**wewoc
+- ✅ **Desktop Computers**
 - ✅ **Laptops**
 - ✅ **Tablets**
 - ✅ **Mobile Phones**

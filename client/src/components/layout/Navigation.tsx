@@ -89,7 +89,16 @@ export const Navigation: React.FC = () => {
   ];
 
   // Filter navigation items based on user privileges
-  const navItems = allNavItems.filter(item => hasPrivilege(item.requiredPrivilege));
+  const navItems = allNavItems.filter(item => {
+    const hasAccess = hasPrivilege(item.requiredPrivilege);
+    console.log('Navigation Debug:', {
+      item: item.name,
+      requiredPrivilege: item.requiredPrivilege,
+      hasAccess,
+      userRole: user?.role
+    });
+    return hasAccess;
+  });
 
   // Filter items based on search query
   const filteredNavItems = navItems.filter(item =>

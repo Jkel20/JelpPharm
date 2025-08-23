@@ -236,6 +236,11 @@ export const Dashboard: React.FC = () => {
   const getPrivilegeBasedQuickActions = () => {
     const privilegeActions = [];
 
+    console.log('Quick Actions Debug:', {
+      userRole: user?.role,
+      isStoreManager: user?.role === 'STORE_MANAGER'
+    });
+
     // Store Manager specific actions
     if (user && user.role === 'STORE_MANAGER') {
       privilegeActions.push(
