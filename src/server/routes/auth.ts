@@ -333,22 +333,22 @@ router.post('/login', authLimiter, validateLogin, async (req: express.Request, r
     let requiredPrivilege: string | null = null;
     
     switch (roleCode) {
-      case 'Administrator':
+      case 'ADMINISTRATOR':
         dashboardRoute = '/dashboard/admin';
         dashboardType = 'admin';
         requiredPrivilege = 'SYSTEM_SETTINGS';
         break;
-      case 'Pharmacist':
+      case 'PHARMACIST':
         dashboardRoute = '/dashboard/pharmacist';
         dashboardType = 'pharmacist';
         requiredPrivilege = 'MANAGE_PRESCRIPTIONS';
         break;
-      case 'Store Manager':
+      case 'STORE_MANAGER':
         dashboardRoute = '/dashboard/store-manager';
         dashboardType = 'store-manager';
         requiredPrivilege = 'MANAGE_INVENTORY';
         break;
-      case 'Cashier':
+      case 'CASHIER':
         dashboardRoute = '/dashboard/cashier';
         dashboardType = 'cashier';
         requiredPrivilege = 'CREATE_SALES';
@@ -687,19 +687,19 @@ router.get('/my-dashboard', auth, async (req: express.Request, res: express.Resp
     if (user.roleId) {
       const role = user.roleId as any;
       
-      if (role.code === 'Administrator') {
+      if (role.code === 'ADMINISTRATOR') {
         dashboardType = 'admin';
         dashboardEndpoint = '/api/dashboard/admin';
         requiredPrivilege = 'SYSTEM_SETTINGS';
-      } else if (role.code === 'Pharmacist') {
+      } else if (role.code === 'PHARMACIST') {
         dashboardType = 'pharmacist';
         dashboardEndpoint = '/api/dashboard/pharmacist';
         requiredPrivilege = 'MANAGE_PRESCRIPTIONS';
-      } else if (role.code === 'Store Manager') {
+      } else if (role.code === 'STORE_MANAGER') {
         dashboardType = 'store-manager';
         dashboardEndpoint = '/api/dashboard/store-manager';
         requiredPrivilege = 'MANAGE_INVENTORY';
-      } else if (role.code === 'Cashier') {
+      } else if (role.code === 'CASHIER') {
         dashboardType = 'cashier';
         dashboardEndpoint = '/api/dashboard/cashier';
         requiredPrivilege = 'CREATE_SALES';
