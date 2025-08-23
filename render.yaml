@@ -3,7 +3,7 @@ services:
     name: jelppharm-pms
     env: node
     plan: free
-    buildCommand: npm ci && npm run build:server && npm run build:client
+    buildCommand: npm ci && npm run build:server && cd client && npm ci && npm run build
     startCommand: npm start
     envVars:
       - key: NODE_ENV
@@ -47,4 +47,8 @@ services:
       - key: PRESCRIPTION_RETENTION_YEARS
         value: 5
       - key: CORS_ORIGIN
+        value: https://jelppharm-pms.onrender.com
+      - key: REACT_APP_API_URL
+        value: https://jelppharm-pms.onrender.com/api
+      - key: REACT_APP_SERVER_URL
         value: https://jelppharm-pms.onrender.com
