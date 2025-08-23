@@ -44,9 +44,19 @@ export const Dashboard: React.FC = () => {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [recentActivity, setRecentActivity] = useState<Activity[]>([]);
 
-  // Get dashboard type from URL
+  // Get dashboard type from URL or user role
   const getDashboardType = () => {
     const path = location.pathname;
+    
+    // If user is logged in, prioritize role-based dashboard
+    if (user && user.role) {
+      if (user.role === 'ADMINISTRATOR') return 'admin';
+      if (user.role === 'PHARMACIST') return 'pharmacist';
+      if (user.role === 'STORE_MANAGER') return 'store-manager';
+      if (user.role === 'CASHIER') return 'cashier';
+    }
+    
+    // Fallback to URL-based detection
     if (path.includes('/admin')) return 'admin';
     if (path.includes('/pharmacist')) return 'pharmacist';
     if (path.includes('/store-manager')) return 'store-manager';
@@ -55,6 +65,15 @@ export const Dashboard: React.FC = () => {
   };
 
   const dashboardType = getDashboardType();
+  
+  // Debug logging
+  console.log('Dashboard Debug:', {
+    user: user,
+    userRole: user?.role,
+    pathname: location.pathname,
+    dashboardType: dashboardType,
+    isStoreManager: user?.role === 'STORE_MANAGER'
+  });
 
   // Get role-specific dashboard content with detailed descriptions, privileges, and restrictions
   const getRoleSpecificContent = () => {
