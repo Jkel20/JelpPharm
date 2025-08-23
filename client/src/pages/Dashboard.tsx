@@ -217,44 +217,93 @@ export const Dashboard: React.FC = () => {
   const getPrivilegeBasedQuickActions = () => {
     const privilegeActions = [];
 
-    if (user && hasPrivilege('VIEW_INVENTORY')) {
-      privilegeActions.push({
-        title: 'Inventory Management',
-        description: 'Monitor stock levels and manage alerts',
-        icon: <Package className="w-6 h-6" />,
-        href: '/inventory',
-        color: 'from-blue-500 to-blue-600'
-      });
-    }
+    // Store Manager specific actions
+    if (user && user.role === 'STORE_MANAGER') {
+      privilegeActions.push(
+        {
+          title: 'Staff Management',
+          description: 'Manage store staff and performance',
+          icon: <Users className="w-6 h-6" />,
+          href: '/users',
+          color: 'from-indigo-500 to-indigo-600'
+        },
+        {
+          title: 'Business Analytics',
+          description: 'View sales trends and performance',
+          icon: <TrendingUp className="w-6 h-6" />,
+          href: '/reports',
+          color: 'from-emerald-500 to-emerald-600'
+        },
+        {
+          title: 'Inventory Control',
+          description: 'Manage stock levels and reordering',
+          icon: <Package className="w-6 h-6" />,
+          href: '/inventory',
+          color: 'from-blue-500 to-blue-600'
+        },
+        {
+          title: 'Sales Operations',
+          description: 'Process sales and manage transactions',
+          icon: <ShoppingCart className="w-6 h-6" />,
+          href: '/sales',
+          color: 'from-green-500 to-green-600'
+        },
+        {
+          title: 'Prescription Management',
+          description: 'Handle prescriptions and dispensing',
+          icon: <FileText className="w-6 h-6" />,
+          href: '/prescriptions',
+          color: 'from-purple-500 to-purple-600'
+        },
+        {
+          title: 'Store Settings',
+          description: 'Configure store operations',
+          icon: <BarChart3 className="w-6 h-6" />,
+          href: '/settings',
+          color: 'from-orange-500 to-orange-600'
+        }
+      );
+    } else {
+      // Default actions for other roles
+      if (user && hasPrivilege('VIEW_INVENTORY')) {
+        privilegeActions.push({
+          title: 'Inventory Management',
+          description: 'Monitor stock levels and manage alerts',
+          icon: <Package className="w-6 h-6" />,
+          href: '/inventory',
+          color: 'from-blue-500 to-blue-600'
+        });
+      }
 
-    if (user && hasPrivilege('VIEW_SALES')) {
-      privilegeActions.push({
-        title: 'Sales Management',
-        description: 'Process sales and generate receipts',
-        icon: <ShoppingCart className="w-6 h-6" />,
-        href: '/sales',
-        color: 'from-green-500 to-emerald-600'
-      });
-    }
+      if (user && hasPrivilege('VIEW_SALES')) {
+        privilegeActions.push({
+          title: 'Sales Management',
+          description: 'Process sales and generate receipts',
+          icon: <ShoppingCart className="w-6 h-6" />,
+          href: '/sales',
+          color: 'from-green-500 to-emerald-600'
+        });
+      }
 
-    if (user && hasPrivilege('VIEW_PRESCRIPTIONS')) {
-      privilegeActions.push({
-        title: 'Prescriptions',
-        description: 'Manage patient prescriptions',
-        icon: <FileText className="w-6 h-6" />,
-        href: '/prescriptions',
-        color: 'from-purple-500 to-violet-600'
-      });
-    }
+      if (user && hasPrivilege('VIEW_PRESCRIPTIONS')) {
+        privilegeActions.push({
+          title: 'Prescriptions',
+          description: 'Manage patient prescriptions',
+          icon: <FileText className="w-6 h-6" />,
+          href: '/prescriptions',
+          color: 'from-purple-500 to-violet-600'
+        });
+      }
 
-    if (user && hasPrivilege('VIEW_REPORTS')) {
-      privilegeActions.push({
-        title: 'Reports & Analytics',
-        description: 'View performance metrics and insights',
-        icon: <BarChart3 className="w-6 h-6" />,
-        href: '/reports',
-        color: 'from-orange-500 to-red-600'
-      });
+      if (user && hasPrivilege('VIEW_REPORTS')) {
+        privilegeActions.push({
+          title: 'Reports & Analytics',
+          description: 'View performance metrics and insights',
+          icon: <BarChart3 className="w-6 h-6" />,
+          href: '/reports',
+          color: 'from-orange-500 to-red-600'
+        });
+      }
     }
 
     return privilegeActions;
@@ -564,7 +613,90 @@ export const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Additional Features Section */}
+        {/* Business Metrics Section - Store Manager Specific */}
+        {user && user.role === 'STORE_MANAGER' && (
+          <div className="mt-12">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Business Performance</h2>
+              <p className="text-gray-600">Key metrics for store management</p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+              <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-6 text-center border border-green-200">
+                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <TrendingUp className="w-6 h-6 text-green-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Monthly Sales</h3>
+                <p className="text-3xl font-bold text-green-600">₵45,230</p>
+                <p className="text-sm text-green-600 mt-1">+12% from last month</p>
+              </div>
+              
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 text-center border border-blue-200">
+                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Users className="w-6 h-6 text-blue-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Staff Count</h3>
+                <p className="text-3xl font-bold text-blue-600">8</p>
+                <p className="text-sm text-blue-600 mt-1">Active employees</p>
+              </div>
+              
+              <div className="bg-gradient-to-r from-purple-50 to-violet-50 rounded-lg p-6 text-center border border-purple-200">
+                <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Package className="w-6 h-6 text-purple-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Inventory Value</h3>
+                <p className="text-3xl font-bold text-purple-600">₵125K</p>
+                <p className="text-sm text-purple-600 mt-1">Total stock value</p>
+              </div>
+              
+              <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-lg p-6 text-center border border-orange-200">
+                <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <FileText className="w-6 h-6 text-orange-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Prescriptions</h3>
+                <p className="text-3xl font-bold text-orange-600">156</p>
+                <p className="text-sm text-orange-600 mt-1">This month</p>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <button 
+                onClick={() => navigate('/users')}
+                className="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white p-4 rounded-lg hover:from-indigo-600 hover:to-indigo-700 transition-all duration-200 flex items-center justify-center space-x-2"
+              >
+                <Users className="w-5 h-5" />
+                <span>Manage Staff</span>
+              </button>
+              
+              <button 
+                onClick={() => navigate('/inventory')}
+                className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 flex items-center justify-center space-x-2"
+              >
+                <Package className="w-5 h-5" />
+                <span>Check Inventory</span>
+              </button>
+              
+              <button 
+                onClick={() => navigate('/sales')}
+                className="bg-gradient-to-r from-green-500 to-green-600 text-white p-4 rounded-lg hover:from-green-600 hover:to-green-700 transition-all duration-200 flex items-center justify-center space-x-2"
+              >
+                <ShoppingCart className="w-5 h-5" />
+                <span>Process Sales</span>
+              </button>
+              
+              <button 
+                onClick={() => navigate('/reports')}
+                className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white p-4 rounded-lg hover:from-emerald-600 hover:to-emerald-700 transition-all duration-200 flex items-center justify-center space-x-2"
+              >
+                <BarChart3 className="w-5 h-5" />
+                <span>View Reports</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* System Overview Section */}
         <div className="mt-12">
           <div className="text-center mb-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">System Overview</h2>
