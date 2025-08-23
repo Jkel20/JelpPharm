@@ -110,8 +110,24 @@ router.post('/signup', authLimiter, validateSignup, async (req: express.Request,
       });
     }
 
+    // Map role names to role codes
+    const roleNameToCode: { [key: string]: string } = {
+      'Administrator': 'ADMINISTRATOR',
+      'Pharmacist': 'PHARMACIST',
+      'Store Manager': 'STORE_MANAGER',
+      'Cashier': 'CASHIER'
+    };
+
+    const roleCode = roleNameToCode[role];
+    if (!roleCode) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid role specified'
+      });
+    }
+
     // Find the role by code
-    const roleDoc = await Role.findOne({ code: role, isActive: true });
+    const roleDoc = await Role.findOne({ code: roleCode, isActive: true });
     if (!roleDoc) {
       return res.status(400).json({
         success: false,
@@ -122,13 +138,25 @@ router.post('/signup', authLimiter, validateSignup, async (req: express.Request,
     let finalStoreId = storeId;
 
     // Handle store creation for non-administrators
-    if (role !== 'Administrator') {
+    if (roleCode !== 'ADMINISTRATOR') {
       if (storeName && storeAddress) {
-        // For now, we'll create a temporary store ID to satisfy the requirement
-        // In a production system, you'd want to create the store first, then the user
-        // This is a simplified approach for development
-        finalStoreId = new mongoose.Types.ObjectId();
-        logger.info(`Using temporary store ID: ${finalStoreId} for user: ${email}`);
+        // Create a new store for the user with minimal required fields
+        const store = new Store({
+          name: storeName,
+          location: storeName, // Use store name as location for now
+          address: storeAddress,
+          city: 'Accra', // Default city
+          state: 'Greater Accra', // Default state
+          zipCode: '00000', // Default zip code
+          country: 'Ghana',
+          phone: phone || '+233000000000', // Use user's phone or default
+          manager: new mongoose.Types.ObjectId(), // Temporary ID, will be updated
+          createdBy: new mongoose.Types.ObjectId(), // Temporary ID, will be updated
+          isActive: true
+        });
+        await store.save();
+        finalStoreId = store._id;
+        logger.info(`Created new store: ${storeName} with ID: ${finalStoreId} for user: ${email}`);
       } else if (!storeId) {
         return res.status(400).json({
           success: false,
@@ -138,8 +166,8 @@ router.post('/signup', authLimiter, validateSignup, async (req: express.Request,
     }
 
     // Validate store assignment for non-administrators
-    if (role !== 'Administrator' && finalStoreId && storeId) {
-      // Only validate if a real storeId was provided (not a temporary one)
+    if (roleCode !== 'ADMINISTRATOR' && finalStoreId && storeId) {
+      // Only validate if a real storeId was provided (not a newly created one)
       const store = await Store.findById(finalStoreId);
       if (!store) {
         return res.status(400).json({
@@ -163,14 +191,23 @@ router.post('/signup', authLimiter, validateSignup, async (req: express.Request,
       phone,
       password,
       roleId: roleDoc._id,
-      storeId: role === 'Administrator' ? undefined : finalStoreId
+      storeId: roleCode === 'ADMINISTRATOR' ? undefined : finalStoreId
     });
 
     await user.save();
 
+    // Update store with correct manager and createdBy IDs if store was created
+    if (roleCode !== 'ADMINISTRATOR' && finalStoreId && storeName && storeAddress) {
+      await Store.findByIdAndUpdate(finalStoreId, {
+        manager: user._id,
+        createdBy: user._id
+      });
+      logger.info(`Updated store ${finalStoreId} with manager and creator: ${user._id}`);
+    }
+
     // Generate JWT token
     const token = jwt.sign(
-      { userId: user._id, role: role, storeId: finalStoreId },
+      { userId: user._id, role: roleCode, storeId: finalStoreId },
       process.env['JWT_SECRET'] || 'fallback-secret',
       { expiresIn: process.env['JWT_EXPIRES_IN'] || '24h' } as jwt.SignOptions
     );
@@ -187,7 +224,8 @@ router.post('/signup', authLimiter, validateSignup, async (req: express.Request,
           fullName: user.fullName,
           username: user.username,
           email: user.email,
-          role: role,
+          role: roleCode,
+          roleName: role,
           storeId: finalStoreId
         },
         token
